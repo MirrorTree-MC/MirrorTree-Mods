@@ -19,7 +19,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import top.bearcabbage.annoyingeffects.AnnoyingEffects;
 
 import java.util.Objects;
 
@@ -47,13 +46,6 @@ public abstract class ServerPlayerEntityMixin extends PlayerEntity {
         if (this.getServer().getWorld(bedroom)!=null && this.getServerWorld()==this.getServer().getWorld(bedroom)) {
             this.networkHandler.sendPacket(new OverlayMessageS2CPacket(Text.literal("在狐狸家里不能丢东西哦")));
             cir.setReturnValue(null);
-        }
-    }
-
-    @Inject(method = "setSpawnPoint", at = @At("HEAD"), cancellable = true)
-    public void setSpawnPoint(RegistryKey<World> dimension, BlockPos pos, float angle, boolean forced, boolean sendMessage, CallbackInfo ci){
-        if (dimension == brokenDream || dimension == farland || dimension.getValue().getNamespace().equals("eternal_starlight") || dimension.getValue().getNamespace().equals("iceandfire")) {
-            ci.cancel();
         }
     }
 }

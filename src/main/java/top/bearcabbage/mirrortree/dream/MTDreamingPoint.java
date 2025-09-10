@@ -89,11 +89,14 @@ public abstract class MTDreamingPoint {
     }
 
     public static BlockPos getRandomPos () {
+        LOGGER.info("getRandomPos");
         Hor_Pos pos = dreamingPointList.get((int) (Math.random() * dreamingPointList.size()));
+        LOGGER.info("getRandomPos: " + pos.x + ", " + pos.y + ", " + pos.z);
         return pos.toBlockPos();
     }
 
     public static BlockPos getNearbyRandomPos (int x, int z, int distance) {
+        LOGGER.info("getNearbyRandomPos: " + x + ", " + z + ", " + distance);
         int x_index = (x+RADIUS)/INTERVAL;
         int z_index = (z+RADIUS)/INTERVAL;
         int x_min = Math.max(0, x_index - distance/INTERVAL);
@@ -109,6 +112,7 @@ public abstract class MTDreamingPoint {
             }
         }
         Hor_Pos randomPos = nearbyPos.get((int) (Math.random() * nearbyPos.size()));
+        LOGGER.info("getNearbyRandomPos: " + randomPos.x + ", " + randomPos.y + ", " + randomPos.z);
         return randomPos.toBlockPos();
     }
 
