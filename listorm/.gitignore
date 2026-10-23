@@ -1,0 +1,9 @@
+.gradle/
+.gradle-home/
+build/
+run/
+.idea/
+*.iml
+*.log
+
+/migration-reference/

@@ -1,0 +1,13 @@
+{
+  "pack": {
+    "description": "Storm experience integration example (no skills or rewards)",
+    "min_format": [
+      101,
+      1
+    ],
+    "max_format": [
+      101,
+      1
+    ]
+  }
+}

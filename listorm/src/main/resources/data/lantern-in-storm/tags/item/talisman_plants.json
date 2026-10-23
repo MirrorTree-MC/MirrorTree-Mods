@@ -1,0 +1,16 @@
+{
+  "values": [
+    "minecraft:dead_bush",
+    "minecraft:fern",
+    "minecraft:cactus",
+    "minecraft:bamboo",
+    "minecraft:brown_mushroom",
+    "minecraft:red_mushroom",
+    "minecraft:crimson_fungus",
+    "minecraft:warped_fungus",
+    "minecraft:crimson_roots",
+    "minecraft:warped_roots",
+    "#minecraft:flowers",
+    "#minecraft:saplings"
+  ]
+}

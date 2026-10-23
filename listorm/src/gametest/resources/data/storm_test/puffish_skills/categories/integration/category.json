@@ -1,0 +1,10 @@
+{
+  "title": "Storm Integration Test",
+  "icon": {
+    "type": "item",
+    "data": {
+      "item": "minecraft:lantern"
+    }
+  },
+  "background": "minecraft:textures/block/stone.png"
+}

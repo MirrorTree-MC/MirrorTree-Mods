@@ -1,0 +1,35 @@
+{
+  "experience_per_level": {
+    "type": "expression",
+    "data": {
+      "expression": "1000"
+    }
+  },
+  "level_limit": 10,
+  "sources": [
+    {
+      "type": "spirit-in-storm:experience",
+      "data": {
+        "type": "food"
+      }
+    },
+    {
+      "type": "spirit-in-storm:experience",
+      "data": {
+        "type": "biome"
+      }
+    },
+    {
+      "type": "spirit-in-storm:experience",
+      "data": {
+        "type": "advancement"
+      }
+    },
+    {
+      "type": "spirit-in-storm:experience",
+      "data": {
+        "type": "ore"
+      }
+    }
+  ]
+}

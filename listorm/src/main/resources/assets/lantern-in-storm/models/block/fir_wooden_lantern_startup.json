@@ -1,0 +1,7 @@
+{
+  "parent": "lantern-in-storm:block/template_wooden_lantern_startup",
+  "textures": {
+    "material": "minecraft:block/spruce_planks",
+    "particle": "#material"
+  }
+}

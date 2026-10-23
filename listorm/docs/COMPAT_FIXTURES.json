@@ -1,0 +1,44 @@
+[
+  {
+    "project": "bAWzYNRd",
+    "version": "0.26.0-alpha.5+26.1.2",
+    "file": "mythicmetals-0.26.0-alpha.5+26.1.2.jar",
+    "sha512": "3f166b540218834ecac503ce90c2d4b28cf1b3bf349364bdf1a484f43d71732304681c8885bfeb005373b6d3f8672a0e32a66415e02b02987c5ab31f15472260"
+  },
+  {
+    "project": "HXF82T3G",
+    "version": "26.1.2.0.22",
+    "file": "BiomesOPlenty-fabric-26.1.2-26.1.2.0.22.jar",
+    "sha512": "f61dee291676bcefb73ca42d4f98e2842ecfdd66ea0d527ee546d6b18442240f15ec42f5e8fe1fe9580523fbdb855a75c6b076cfcd2c4a433fcb38356f8fe922"
+  },
+  {
+    "project": "jhl28YkY",
+    "version": "3.1.1",
+    "file": "alloy-forgery-fabric-3.1.1+26.1.2.jar",
+    "sha512": "2d5185d542837c5d6e8607ba11ff9dfb6c42813a7a1755c9e2692b9c66c701937dde713c4e47768582251fbc736783f7b3199cd6e99640bccdd2643fa6c23885"
+  },
+  {
+    "project": "ccKDOlHs",
+    "version": "0.13.1+26.1",
+    "file": "owo-lib-0.13.1+26.1.jar",
+    "sha512": "2e95f7b87b04477c114f6a0dd8cad49b1415bd1715abd535294613be88e8b3796f5fd0b614b58e2188e2095d6f0e3179d0cc4a0679380026622fb7fc05417b74"
+  },
+  {
+    "project": "s3dmwKy5",
+    "version": "26.1.2.0.2",
+    "file": "GlitchCore-fabric-26.1.2-26.1.2.0.2.jar",
+    "sha512": "e4c98e378a3a8e0445fbb823f4b557072de40d2aa5ff4ab91395e8e599f496fb24ec10163250fc0de1a2bfa31f47f0c5ff63e588d3f7c73f574c1b52161b7528"
+  },
+  {
+    "project": "kkmrDlKT",
+    "version": "26.1.2.0.3",
+    "file": "TerraBlender-fabric-26.1.2-26.1.2.0.3.jar",
+    "sha512": "6007960450f30dcf3828ec6b704dfc877083a9bce7747da9473c790bfd9327cd4dbc20f8d0bba887bc48a23ef00d97c55ad4734befd510730ea4959c896a3260"
+  },
+  {
+    "project": "7vxePowz",
+    "version": "26.1-3.6.21",
+    "file": "FarmersDelight-26.1-3.6.21+refabricated.jar",
+    "sha512": "cb1a067b85af5994ad4f1c299cb5690e20a3997af396d7dc4f661517fbdd6e4dab2595853c7047790500225d45c3647485d9ffea4eb7af85371b087060a3185b"
+  }
+]

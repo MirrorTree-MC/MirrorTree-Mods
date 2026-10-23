@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "lantern-in-storm",
+  "version": "${version}",
+  "name": "Lantern in Storm",
+  "description": "Lantern safety, nightmare effects, and exploration experience.",
+  "authors": [
+    "Leaves of MirrorTree",
+    "AC-Mnky"
+  ],
+  "license": "MIT",
+  "environment": "*",
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "~26.1.2",
+    "java": ">=25",
+    "fabric-api": "*",
+    "trinkets_updated": ">=4.0.1",
+    "puffish_skills": ">=0.19.1"
+  },
+  "entrypoints": {
+    "main": [
+      "top.bearcabbage.lanterninstorm.LanternInStorm"
+    ],
+    "client": [
+      "top.bearcabbage.lanterninstorm.client.StormClient"
+    ]
+  },
+  "mixins": [
+    "storm.mixins.json",
+    {
+      "config": "storm.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "provides": [
+    "annoyingeffects",
+    "spirit-in-storm"
+  ]
+}

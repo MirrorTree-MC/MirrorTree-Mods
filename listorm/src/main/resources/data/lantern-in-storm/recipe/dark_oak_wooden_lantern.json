@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "a": "minecraft:dark_oak_planks",
+    "b": "lantern-in-storm:lantern_core"
+  },
+  "pattern": [
+    "aaa",
+    "aba",
+    "aaa"
+  ],
+  "result": {
+    "count": 1,
+    "id": "lantern-in-storm:dark_oak_wooden_lantern"
+  }
+}

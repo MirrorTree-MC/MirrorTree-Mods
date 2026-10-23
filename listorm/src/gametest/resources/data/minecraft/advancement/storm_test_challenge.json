@@ -1,0 +1,17 @@
+{
+  "criteria": {
+    "done": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "icon": {
+      "id": "minecraft:lantern"
+    },
+    "title": "Storm Test",
+    "description": "Integration fixture",
+    "frame": "challenge",
+    "show_toast": false,
+    "announce_to_chat": false
+  }
+}

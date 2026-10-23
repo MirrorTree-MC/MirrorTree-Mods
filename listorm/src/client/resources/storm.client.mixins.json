@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "package": "top.bearcabbage.lanterninstorm.client.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "LocalPlayerControlsMixin",
+    "MinecraftControlsMixin",
+    "EntityVisibilityMixin",
+    "CameraMixin",
+    "ChatScreenMixin",
+    "ChatComponentMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

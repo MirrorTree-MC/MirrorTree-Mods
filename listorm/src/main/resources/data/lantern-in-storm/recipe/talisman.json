@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "a": "#lantern-in-storm:talisman_plants",
+    "b": "minecraft:stick",
+    "c": "#minecraft:planks"
+  },
+  "pattern": [
+    " a ",
+    "bcb",
+    "b b"
+  ],
+  "result": {
+    "count": 1,
+    "id": "lantern-in-storm:talisman"
+  }
+}
