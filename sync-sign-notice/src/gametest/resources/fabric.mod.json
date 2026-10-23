@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "notice-test",
+  "version": "1.0",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-client-gametest": [
+      "top.bearcabbage.syncsignnotice.NoticeGameTest"
+    ]
+  },
+  "depends": {
+    "sync-sign-notice": "*"
+  }
+}
