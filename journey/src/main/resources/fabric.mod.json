@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "mirrortree",
+  "version": "6.1.0+26.1.2",
+  "name": "MirrorTree",
+  "description": "MirrorTree shared content, bedroom protection and server dream travel.",
+  "authors": [
+    "BaicaiBear"
+  ],
+  "contact": {
+    "sources": "https://github.com/BaicaiBear/MirrorTree-Journey"
+  },
+  "license": "CC0-1.0",
+  "icon": "assets/mirrortree/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "top.bearcabbage.mirrortree.MirrorTree"
+    ],
+    "client": [
+      "top.bearcabbage.mirrortree.MTClient"
+    ]
+  },
+  "mixins": [
+    "mirrortree.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "~26.1.2",
+    "java": ">=25",
+    "fabric-api": "*",
+    "starry_skies": ">=4.2.0",
+    "lantern-in-storm": ">=6.0.0-alpha.4"
+  }
+}

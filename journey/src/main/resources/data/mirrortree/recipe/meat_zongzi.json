@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": "minecraft:lily_pad",
+    "*": "farmersdelight:cooked_rice",
+    "-": "minecraft:cooked_porkchop"
+  },
+  "pattern": [
+    "#-#",
+    "#*#",
+    "###"
+  ],
+  "result": {
+    "count": 1,
+    "id": "mirrortree:meat_zongzi"
+  }
+}
