@@ -377,11 +377,9 @@ public final class StormGameTest implements FabricClientGameTest {
 
   private static void verifyLampPlacement(net.minecraft.server.level.ServerPlayer player) {
     var originalHand = player.getMainHandItem();
-    Set<String> metal =
-        Set.of("midas_gold_lantern", "morkite_lantern", "starrite_lantern", "prometheum_lantern");
     try {
       for (String dimension :
-          List.of("mirrortree:bedroom", "starryskies:placement_test", "storm_test:nightmare")) {
+          List.of("mirrortree:bedroom", "starry_skies:placement_test", "storm_test:nightmare")) {
         var key =
             net.minecraft.resources.ResourceKey.create(
                 net.minecraft.core.registries.Registries.DIMENSION, Identifier.parse(dimension));
@@ -393,11 +391,7 @@ public final class StormGameTest implements FabricClientGameTest {
             target.below(), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
         for (var entry : StormContent.LAMPS.entrySet()) {
           var lamp = entry.getValue();
-          boolean allowed =
-              dimension.equals("storm_test:nightmare") || metal.contains(entry.getKey());
-          check(
-              LampPlacementRules.canPlace(key, lamp) == allowed,
-              "placement policy " + dimension + " " + entry.getKey());
+          boolean allowed = true;
           level.setBlockAndUpdate(
               target, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
           var stack = new ItemStack(lamp.asItem());
@@ -420,29 +414,16 @@ public final class StormGameTest implements FabricClientGameTest {
             check(
                 stack.getCount() == (allowed ? before - 1 : before),
                 "rejected lamp placement preserves item count");
-          } else if (!allowed)
-            check(
-                lamp.getStateForPlacement(context) == null,
-                "unregistered white-paper item cannot bypass block placement policy");
+          } else
+            check(lamp.getStateForPlacement(context) != null, "white-paper block placement supported");
         }
-        // Existing non-metal lamps are retained; the restriction is only on new placement.
+        // Existing lamps also survive neighbor updates.
         var existing = StormContent.LAMPS.get("deathbear_lantern").defaultBlockState();
         level.setBlockAndUpdate(target, existing);
         level.updateNeighborsAt(target.below(), net.minecraft.world.level.block.Blocks.STONE);
         check(
             level.getBlockState(target).is(existing.getBlock()),
             "existing commemorative lantern remains in " + dimension);
-      }
-      var other =
-          net.minecraft.resources.ResourceKey.create(
-              net.minecraft.core.registries.Registries.DIMENSION,
-              Identifier.parse("mirrortree:other"));
-      for (var lamp : StormContent.LAMPS.values()) {
-        check(
-            LampPlacementRules.canPlace(Level.OVERWORLD, lamp),
-            "overworld allows existing lamp selection");
-        check(
-            LampPlacementRules.canPlace(other, lamp), "other MirrorTree dimensions are unaffected");
       }
     } finally {
       player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, originalHand);
@@ -461,7 +442,8 @@ public final class StormGameTest implements FabricClientGameTest {
     player.teleportTo(bedroom, 100.5, 8, 100.5, Set.of(), 0, 0, false);
     var state = PlayerStore.get(player);
     state.graceTicks = 0;
-    state.safe = false;
+    state.safe = true; // Login starts safe even with persisted nightmare effects.
+    state.cleared = false;
     state.tick = 19;
     var glove =
         eu.pb4.trinkets.api.TrinketsApi.getAttachment(player).getSlotAccess("offhand/glove", 0);
@@ -498,14 +480,14 @@ public final class StormGameTest implements FabricClientGameTest {
         server.getLevel(
             net.minecraft.resources.ResourceKey.create(
                 net.minecraft.core.registries.Registries.DIMENSION,
-                Identifier.parse("starryskies:placement_test")));
-    check(stars != null, "starryskies fixture loads");
+                Identifier.parse("starry_skies:placement_test")));
+    check(stars != null, "starry_skies fixture loads");
     player.teleportTo(stars, 100.5, 8, 100.5, Set.of(), 0, 0, false);
     state.tick = 19;
     SafetyService.tick(player);
     check(
         !state.safe && player.hasEffect(AnnoyingEffects.TANGLING_NIGHTMARE),
-        "leaving bedroom for starryskies restores ordinary nightmare rules");
+        "leaving bedroom for starry_skies restores ordinary nightmare rules");
     player.removeAllEffects();
   }
 }

@@ -42,3 +42,5 @@
 `LanternInStormAPI` 保留 `setRTPSpawn`、`setWarpSpawn`、`getRTPSpawn`、`addSafeWorld`、`overrideRTPSpawnSetting` 的用途，参数更新为 26.1.2 官方名称类型。入梦点同时保存维度与坐标，避免跨维度读取错误。其他旧版二进制插件需要重新编译。
 
 新增存档格式不读取旧 NBT/旧 JSON；新世界数据经过关闭、重新打开验证。效果 JSON 使用原文件名，已有参数保留，缺项补默认值；启用效果的间隔必须大于零。
+
+- alpha.4 撤销 alpha.2 的灯种类放置限制；球球世界点亮防护规则不变。补齐卧室登录时已有梦魇的清理与效果 tick 防护。

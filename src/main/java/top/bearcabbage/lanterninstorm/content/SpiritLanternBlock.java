@@ -60,14 +60,6 @@ public final class SpiritLanternBlock extends LanternBlock {
 
   @Override
   public BlockState getStateForPlacement(BlockPlaceContext context) {
-    if (!LampPlacementRules.canPlace(context.getLevel().dimension(), this)) {
-      if (!context.getLevel().isClientSide() && context.getPlayer() != null)
-        context
-            .getPlayer()
-            .sendOverlayMessage(
-                Component.translatable("messages.lantern-in-storm.mythic_lamps_only"));
-      return null;
-    }
     BlockState state = super.getStateForPlacement(context);
     return state == null ? null : state.setValue(FACING, context.getHorizontalDirection());
   }

@@ -40,7 +40,10 @@ public final class SafetyService {
     var defense = DefenseEquipment.find(player);
     ItemStack stack = defense.stack();
     if (safe) {
-      if (!state.safe) clear(player, ItemStack.EMPTY, false);
+      if (!state.safe || !state.cleared
+          || player.hasEffect(AnnoyingEffects.TANGLING_DREAMS)
+          || player.hasEffect(AnnoyingEffects.TANGLING_NIGHTMARE))
+        clear(player, ItemStack.EMPTY, false);
       StormNetworking.bar(player, false, 0);
       TanglingNightmareStatusEffect.AnnoyingBar.reset(player);
       state.cleared = true;

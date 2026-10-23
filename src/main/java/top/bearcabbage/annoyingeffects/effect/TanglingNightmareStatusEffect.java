@@ -30,6 +30,12 @@ public class TanglingNightmareStatusEffect extends MobEffect {
 
   @Override
   public boolean applyEffectTick(ServerLevel level, LivingEntity entity, int strength) {
+    // Persisted nightmares must not generate debuffs before the first safety tick.
+    if (entity instanceof Player player
+        && level.dimension().identifier().toString().equals("mirrortree:bedroom")) {
+      AnnoyingBar.reset(player);
+      return false;
+    }
     boolean weak = this instanceof TanglingDreamsStatusEffect;
     double factor = Math.scalb(1.0, Math.min(30, strength));
     var random = RandomSource.create(entity.getRandom().nextLong());

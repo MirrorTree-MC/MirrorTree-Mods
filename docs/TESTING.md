@@ -1,3 +1,7 @@
+# alpha.4 bedroom/lamp regression (2026-10-23)
+
+The combined MirrorTree dedicated-server probe passed 94 assertions, including bedroom login cleanup, no defense wear, all 33 lamp items placed in each dimension, unchanged Starry Skies protection, and exhausted-doll debuff retention. The two existing headless LIStorm GameTests also passed. The older client suite below was updated for unrestricted lamp placement but was not rerun in full for this change.
+
 # 验证记录 · 更新于 2026-10-23
 
 当前交付是 `6.0.0-alpha.3+26.1.2`。这是已实现并通过自动化集成测试的迁移版，尚未做长期玩家试玩和真实网络压力测试；不把“能编译”视为全功能验收。
