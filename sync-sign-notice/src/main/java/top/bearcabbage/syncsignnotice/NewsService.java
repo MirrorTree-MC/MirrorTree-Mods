@@ -25,9 +25,7 @@ public class NewsService {
      * 从远程数据库拉取新闻（异步执行）
      */
     public static CompletableFuture<Void> pullNews(DatabaseConfig dbConfig, SConfig noticeCache, int maxNewsCount) {
-        return CompletableFuture.runAsync(() -> {
-            pullNewsSync(dbConfig, noticeCache, maxNewsCount);
-        });
+        return CompletableFuture.runAsync(() -> pullNewsSync(dbConfig, noticeCache, maxNewsCount));
     }
     
     /**
@@ -53,71 +51,19 @@ public class NewsService {
                                   dbConfig.host, dbConfig.port, dbConfig.database);
         
         try (Connection connection = DriverManager.getConnection(url, dbConfig.user, dbConfig.password)) {
-            int totalCount = getTotalNewsCount(connection);
-            
-            SyncSignNotice.LOGGER.info("[SyncSignNotice] Database has {} total news items, requesting {} items", totalCount, maxNewsCount);
-            
-            if (totalCount == 0) {
-                handleEmptyDatabase(noticeCache);
-                return;
-            }
-            
-            int actualLimit = Math.min(maxNewsCount, totalCount);
-            if (actualLimit < maxNewsCount) {
-                SyncSignNotice.LOGGER.info("[SyncSignNotice] Adjusted request limit from {} to {} (database only has {} items)", 
-                           maxNewsCount, actualLimit, totalCount);
-            }
-            
-            List<NewsItem> newsItems = fetchNewsItems(connection, actualLimit);
-            
-            SyncSignNotice.publishNews(newsItems.stream().map(NewsService::createSignText).toList());
-
-            // 缓存新闻到本地
-            cacheNewsItems(noticeCache, newsItems);
-            
-            logPullResult(newsItems.size(), maxNewsCount, totalCount);
-            
+            readAndPublishNews(connection, noticeCache, maxNewsCount);
         } catch (SQLException e) {
             SyncSignNotice.LOGGER.error("[SyncSignNotice] Failed to connect to database: {}", e.getMessage());
             loadFromCache(noticeCache);
         }
     }
     
-    /**
-     * 获取数据库中新闻总数
-     */
-    private static int getTotalNewsCount(Connection connection) throws SQLException {
-        String countQuery = "SELECT COUNT(*) FROM jellynews";
-        try (PreparedStatement countStmt = connection.prepareStatement(countQuery);
-             ResultSet countRs = countStmt.executeQuery()) {
-            if (countRs.next()) {
-                return countRs.getInt(1);
-            }
-        }
-        return 0;
-    }
-    
-    /**
-     * 处理空数据库情况
-     */
-    private static void handleEmptyDatabase(SConfig noticeCache) {
-        SyncSignNotice.LOGGER.warn("[SyncSignNotice] No news items found in database");
-        SyncSignNotice.publishNews(List.of());
-        noticeCache.set("lastUpdate", System.currentTimeMillis());
-        noticeCache.set("newsItems", new ArrayList<NewsItem>());
-        noticeCache.save();
-    }
-    
-    /**
-     * 从数据库获取新闻项
-     */
-    private static List<NewsItem> fetchNewsItems(Connection connection, int limit) throws SQLException {
+    /** Read one bounded result and publish/cache the same complete snapshot, including empty results. */
+    static void readAndPublishNews(Connection connection, SConfig noticeCache, int limit) throws SQLException {
         String query = "SELECT created_at, type, name, content FROM jellynews ORDER BY created_at DESC LIMIT ?";
         List<NewsItem> newsItems = new ArrayList<>();
-        
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setInt(1, limit);
-            
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     NewsItem item = new NewsItem();
@@ -129,31 +75,13 @@ public class NewsService {
                 }
             }
         }
-        
-        return newsItems;
-    }
-    
-    /**
-     * 缓存新闻项到本地
-     */
-    private static void cacheNewsItems(SConfig noticeCache, List<NewsItem> newsItems) {
+        SyncSignNotice.publishNews(newsItems.stream().map(NewsService::createSignText).toList());
         noticeCache.set("lastUpdate", System.currentTimeMillis());
         noticeCache.set("newsItems", newsItems);
         noticeCache.save();
+        SyncSignNotice.LOGGER.info("[SyncSignNotice] Successfully pulled {} news items (requested {})", newsItems.size(), limit);
     }
-    
-    /**
-     * 记录拉取结果日志
-     */
-    private static void logPullResult(int actualCount, int requestedCount, int totalCount) {
-        if (actualCount < requestedCount) {
-            SyncSignNotice.LOGGER.info("[SyncSignNotice] Successfully pulled {} news items (requested {}, but database only has {})", 
-                       actualCount, requestedCount, totalCount);
-        } else {
-            SyncSignNotice.LOGGER.info("[SyncSignNotice] Successfully pulled {} news items", actualCount);
-        }
-    }
-    
+
     /**
      * 创建SignText对象
      */
@@ -163,13 +91,13 @@ public class NewsService {
         String part3 = item.content.length() > 20 ? item.content.substring(20, Math.min(30, item.content.length())) : "";
 
         return new SignText(
-            new net.minecraft.network.chat.Component[]{
+            new Component[]{
                 Component.literal("[" + item.type + "] " + item.name), 
                 Component.literal(part1), 
                 Component.literal(part2), 
                 Component.literal(part3)
             },
-            new net.minecraft.network.chat.Component[]{
+            new Component[]{
                     Component.literal("[" + item.type + "] " + item.name),
                     Component.literal(part1),
                     Component.literal(part2),

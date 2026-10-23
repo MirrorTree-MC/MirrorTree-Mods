@@ -1,6 +1,11 @@
 package top.bearcabbage.syncsignnotice;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.*;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
@@ -41,12 +46,20 @@ public final class NoticeGameTest implements FabricClientGameTest {
             check(true,"concurrent publication and rendering have no partial list or index errors");
             try {
                 var cache=new SConfig(Path.of("notice-regression-cache.json").toAbsolutePath());
-                var empty=NewsService.class.getDeclaredMethod("handleEmptyDatabase",SConfig.class);
-                empty.setAccessible(true);
-                SyncSignNotice.publishNews(List.of(news));
-                empty.invoke(null,cache);
-                check(sign.getFrontText()==marker,"empty database clears published notices");
                 var item=new NewsItem();item.type="测试";item.name="作者";item.content="离线缓存测试";
+                int[] query = new int[2];
+                NewsService.readAndPublishNews(newsConnection(List.of(item), query), cache, 5);
+                check(query[0] == 1 && query[1] == 5,
+                        "refresh executes one LIMIT query with the configured bound");
+                check(sign.getFrontText().getMessage(0,false).getString().equals("[测试] 作者")
+                        && cache.get("newsItems", NewsItem[].class).length == 1,
+                        "JDBC result publishes and caches the same notices");
+                NewsService.readAndPublishNews(newsConnection(List.of(), new int[2]), cache, 5);
+                check(sign.getFrontText()==marker,"empty JDBC result clears published notices");
+                var savedCache = new SConfig(Path.of("notice-regression-cache.json").toAbsolutePath());
+                check(savedCache.get("newsItems", NewsItem[].class).length == 0
+                        && savedCache.get("lastUpdate", Long.class) > 0,
+                        "empty JDBC result persists an empty fresh cache");
                 cache.set("lastUpdate",System.currentTimeMillis());cache.set("newsItems",new NewsItem[]{item});cache.save();
                 var load=NewsService.class.getDeclaredMethod("loadFromCache",SConfig.class);load.setAccessible(true);
                 load.invoke(null,cache);
@@ -58,5 +71,41 @@ public final class NoticeGameTest implements FabricClientGameTest {
             }catch(Exception e){throw new RuntimeException(e);}
         });
         }
+    }
+
+    private static Connection newsConnection(List<NewsItem> rows, int[] query) {
+        int[] index = {-1};
+        ResultSet results = jdbc(ResultSet.class, (proxy, method, args) -> switch (method.getName()) {
+            case "next" -> ++index[0] < rows.size();
+            case "getTimestamp" -> rows.get(index[0]).createdAt;
+            case "getString" -> switch ((String) args[0]) {
+                case "type" -> rows.get(index[0]).type;
+                case "name" -> rows.get(index[0]).name;
+                case "content" -> rows.get(index[0]).content;
+                default -> throw new AssertionError("Unexpected column: " + args[0]);
+            };
+            case "close" -> null;
+            default -> throw new AssertionError("Unexpected ResultSet call: " + method.getName());
+        });
+        PreparedStatement statement = jdbc(PreparedStatement.class, (proxy, method, args) -> switch (method.getName()) {
+            case "setInt" -> {
+                if ((int) args[0] != 1) throw new AssertionError("Unexpected LIMIT parameter");
+                query[1] = (int) args[1];
+                yield null;
+            }
+            case "executeQuery" -> { query[0]++; yield results; }
+            case "close" -> null;
+            default -> throw new AssertionError("Unexpected statement call: " + method.getName());
+        });
+        return jdbc(Connection.class, (proxy, method, args) -> {
+            if (!method.getName().equals("prepareStatement")
+                    || !args[0].equals("SELECT created_at, type, name, content FROM jellynews ORDER BY created_at DESC LIMIT ?"))
+                throw new AssertionError("Unexpected database request: " + method.getName());
+            return statement;
+        });
+    }
+
+    private static <T> T jdbc(Class<T> type, InvocationHandler handler) {
+        return type.cast(Proxy.newProxyInstance(type.getClassLoader(), new Class<?>[]{type}, handler));
     }
 }

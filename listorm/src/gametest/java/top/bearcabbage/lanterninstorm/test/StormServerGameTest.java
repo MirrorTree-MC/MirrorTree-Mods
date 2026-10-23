@@ -11,6 +11,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.Vec3;
 import top.bearcabbage.annoyingeffects.AnnoyingEffects;
@@ -65,7 +66,33 @@ public class StormServerGameTest {
       helper.assertTrue(
           a.count("food", "test:shared") == 1 && b.count("food", "test:shared") == 2,
           "player progression counters are isolated");
+      double blockReach = first.getAttributeValue(Attributes.BLOCK_INTERACTION_RANGE);
+      double entityReach = first.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE);
+      first.addEffect(new MobEffectInstance(AnnoyingEffects.CONTROLS_SHORT_REACH, 40));
+      helper.assertTrue(
+          Math.abs(first.getAttributeValue(Attributes.BLOCK_INTERACTION_RANGE) - (blockReach - 1))
+              < 1.0e-8,
+          "short reach still reduces block interaction distance");
+      helper.assertTrue(
+          Math.abs(first.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE) - (entityReach - 1))
+              < 1.0e-8,
+          "short reach still reduces entity interaction distance");
+      double safeFallDistance = first.getAttributeValue(Attributes.SAFE_FALL_DISTANCE);
+      double fallDamageMultiplier = first.getAttributeValue(Attributes.FALL_DAMAGE_MULTIPLIER);
+      double gravity = first.getAttributeValue(Attributes.GRAVITY);
       first.addEffect(new MobEffectInstance(AnnoyingEffects.HEAVINESS, 40));
+      helper.assertTrue(
+          Math.abs(first.getAttributeValue(Attributes.SAFE_FALL_DISTANCE) - (safeFallDistance - 2.25))
+              < 1.0e-8,
+          "heaviness still reduces safe fall distance");
+      helper.assertTrue(
+          Math.abs(first.getAttributeValue(Attributes.FALL_DAMAGE_MULTIPLIER)
+                  - (fallDamageMultiplier + 1))
+              < 1.0e-8,
+          "heaviness still increases fall damage");
+      helper.assertTrue(
+          Math.abs(first.getAttributeValue(Attributes.GRAVITY) - gravity * 2) < 1.0e-8,
+          "heaviness still doubles gravity");
       first.setDeltaMovement(Vec3.ZERO);
       first.baseTick();
       helper.assertTrue(

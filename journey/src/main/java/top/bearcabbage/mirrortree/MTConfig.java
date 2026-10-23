@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static com.mojang.text2speech.Narrator.LOGGER;
+import static top.bearcabbage.mirrortree.MirrorTree.LOGGER;
 
 public class MTConfig {
     private final Path filePath;
@@ -38,7 +38,7 @@ public class MTConfig {
         load();
     }
 
-    public void load() {
+    private void load() {
         try (FileReader reader = new FileReader(filePath.toFile())) {
             this.jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
         } catch (IOException e) {
@@ -46,7 +46,7 @@ public class MTConfig {
         }
     }
 
-    public void save() {
+    private void save() {
         try (FileWriter writer = new FileWriter(filePath.toFile())) {
             gson.toJson(jsonObject, writer);
         } catch (IOException e) {
@@ -54,23 +54,8 @@ public class MTConfig {
         }
     }
 
-    public void set(String key, Object value) {
-        jsonObject.add(key, gson.toJsonTree(value));
-    }
-
     public <T> T get(String key, Class<T> clazz) {
         return gson.fromJson(jsonObject.get(key), clazz);
-    }
-
-    public <T> T getOrDefault(String key, T defaultValue) {
-        if (jsonObject.has(key)) {
-            return gson.fromJson(jsonObject.get(key), (Class<T>) defaultValue.getClass());
-        }
-        else {
-            set(key, defaultValue);
-            save();
-            return defaultValue;
-        }
     }
 
     public int getInt(String key, int defaultValue) {
@@ -78,14 +63,10 @@ public class MTConfig {
             return jsonObject.get(key).getAsInt();
         }
         else {
-            set(key, defaultValue);
+            jsonObject.addProperty(key, defaultValue);
             save();
             return defaultValue;
         }
-    }
-
-    public <T> T getAll(Class<T> clazz) {
-        return gson.fromJson(jsonObject, clazz);
     }
 
 }

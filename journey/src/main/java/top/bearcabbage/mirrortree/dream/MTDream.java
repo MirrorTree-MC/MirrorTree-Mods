@@ -1,6 +1,10 @@
 package top.bearcabbage.mirrortree.dream;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -128,6 +132,7 @@ public final class MTDream {
                     && !player.isCreative() && !player.isSpectator()
                     && player.gameMode() != GameType.ADVENTURE) player.setGameMode(GameType.ADVENTURE);
         }
+        if (SEARCHES.isEmpty()) return;
         for (var entry : new ArrayList<>(SEARCHES.entrySet())) {
             var player = server.getPlayerList().getPlayer(entry.getKey());
             Search search = entry.getValue();
@@ -184,14 +189,22 @@ public final class MTDream {
     }
 
     private static BlockPos nearbySafe(ServerLevel world, BlockPos center) {
-        for (int radius = 0; radius <= 4; radius++)
-            for (int y = 0; y <= 3; y++)
-                for (int x = -radius; x <= radius; x++)
-                    for (int z = -radius; z <= radius; z++)
-                        for (int dy : y == 0 ? new int[]{0} : new int[]{y, -y}) {
-                            BlockPos pos = center.offset(x, dy, z);
+        for (int radius = 0; radius <= 4; radius++) {
+            for (int y = 0; y <= 3; y++) {
+                for (int x = -radius; x <= radius; x++) {
+                    for (int z = -radius; z <= radius; z++) {
+                        // Inner positions were already checked at an earlier radius.
+                        if (radius > 0 && Math.abs(x) < radius && Math.abs(z) < radius) continue;
+                        BlockPos pos = center.offset(x, y, z);
+                        if (safe(world, pos)) return pos;
+                        if (y > 0) {
+                            pos = center.offset(x, -y, z);
                             if (safe(world, pos)) return pos;
                         }
+                    }
+                }
+            }
+        }
         return null;
     }
 

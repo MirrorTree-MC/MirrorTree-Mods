@@ -27,6 +27,8 @@ public final class SpiritLanternBlock extends LanternBlock {
                           .fieldOf("radius")
                           .forGetter(SpiritLanternBlock::radius))
                   .apply(i, SpiritLanternBlock::new));
+  private static final VoxelShape HANGING_SHAPE = Block.box(3, 2, 3, 13, 12, 13);
+  private static final VoxelShape STANDING_SHAPE = Block.box(3, 3, 3, 13, 13, 13);
   private final int radius;
 
   public SpiritLanternBlock(BlockBehaviour.Properties properties, int radius) {
@@ -67,9 +69,7 @@ public final class SpiritLanternBlock extends LanternBlock {
   @Override
   protected VoxelShape getShape(
       BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-    return state.getValue(HANGING)
-        ? Block.box(3, 2, 3, 13, 12, 13)
-        : Block.box(3, 3, 3, 13, 13, 13);
+    return state.getValue(HANGING) ? HANGING_SHAPE : STANDING_SHAPE;
   }
 
   @Override

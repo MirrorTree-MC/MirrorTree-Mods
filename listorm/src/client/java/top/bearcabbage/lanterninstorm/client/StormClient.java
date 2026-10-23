@@ -17,6 +17,17 @@ import top.bearcabbage.lanterninstorm.content.*;
 import top.bearcabbage.lanterninstorm.safety.DefenseEquipment;
 
 public final class StormClient implements ClientModInitializer {
+  private static final Identifier[] BAR_TEXTURES = {
+    Identifier.fromNamespaceAndPath("annoyingeffects", "textures/gui/model0.png"),
+    Identifier.fromNamespaceAndPath("annoyingeffects", "textures/gui/model1.png"),
+    Identifier.fromNamespaceAndPath("annoyingeffects", "textures/gui/model2.png"),
+    Identifier.fromNamespaceAndPath("annoyingeffects", "textures/gui/model3.png"),
+    Identifier.fromNamespaceAndPath("annoyingeffects", "textures/gui/model4.png"),
+    Identifier.fromNamespaceAndPath("annoyingeffects", "textures/gui/model5.png")
+  };
+  private static final Identifier FLASHLIGHT_TEXTURE = StormContent.id("textures/item/flashlight.png");
+  private static final Identifier TALISMAN_TEXTURE = StormContent.id("textures/item/talisman.png");
+
   private static boolean display;
   private static int stage;
 
@@ -84,7 +95,7 @@ public final class StormClient implements ClientModInitializer {
     if (display && stage < 6)
       graphics.blit(
           RenderPipelines.GUI_TEXTURED,
-          Identifier.fromNamespaceAndPath("annoyingeffects", "textures/gui/model" + stage + ".png"),
+          BAR_TEXTURES[stage],
           graphics.guiWidth() / 2 - 7,
           graphics.guiHeight() - 49,
           0,
@@ -97,10 +108,10 @@ public final class StormClient implements ClientModInitializer {
     if (stack.isEmpty()) return;
     if ((double) stack.getDamageValue() / stack.getMaxDamage() > .9
         && client.player.tickCount % 20 < 10) return;
-    String image = stack.is(StormContent.FLASHLIGHT) ? "flashlight" : "talisman";
+    var texture = stack.is(StormContent.FLASHLIGHT) ? FLASHLIGHT_TEXTURE : TALISMAN_TEXTURE;
     graphics.blit(
         RenderPipelines.GUI_TEXTURED,
-        StormContent.id("textures/item/" + image + ".png"),
+        texture,
         graphics.guiWidth() - 46,
         graphics.guiHeight() - 46,
         0,

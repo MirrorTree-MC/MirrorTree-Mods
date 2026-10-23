@@ -161,6 +161,7 @@ public final class StormGameTest implements FabricClientGameTest {
                     orePos, net.minecraft.world.level.block.Blocks.COAL_ORE.defaultBlockState());
                 check(player.gameMode.destroyBlock(orePos), "ore broken through game mode");
                 check(state.count("ore", "minecraft:coal_ore") == 1, "ore break event tracked");
+                verifyDefenseSelection(player);
                 var attachment = eu.pb4.trinkets.api.TrinketsApi.getAttachment(player);
                 var glove = attachment.getSlotAccess("offhand/glove", 0);
                 check(glove.isValid(), "offhand glove slot available");
@@ -372,6 +373,88 @@ public final class StormGameTest implements FabricClientGameTest {
                 check(state.count("biome", "test:biome") == 1, "biome progress survives restart");
                 check(state.spawn != null, "origin survives restart");
               });
+    }
+  }
+
+  private static void verifyDefenseSelection(net.minecraft.server.level.ServerPlayer player) {
+    var inventory =
+        eu.pb4.trinkets.api.TrinketsApi.getAttachment(player).getInventory("offhand/glove");
+    check(inventory != null && inventory.isEmpty(), "empty glove fixture available");
+    var mainHand = player.getMainHandItem();
+    var offHand = player.getOffhandItem();
+    var gameplay = eu.pb4.trinkets.impl.TrinketsConfig.getGameplay(false);
+    boolean cosmeticsEnabled = gameplay.cosmeticSlots;
+    var extraSlots = Identifier.parse("storm_test:defense_selection");
+    try {
+      gameplay.cosmeticSlots = true;
+      inventory.addSlotCountModifier(
+          new net.minecraft.world.entity.ai.attributes.AttributeModifier(
+              extraSlots,
+              2,
+              net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE));
+      inventory.updateSlotCount();
+      int last = inventory.getContainerSize() - 1;
+      check(last >= 2, "multiple glove slots available");
+      var first = new ItemStack(StormContent.FLASHLIGHT);
+      var selected = new ItemStack(StormContent.TALISMAN);
+      inventory.setItem(0, first);
+      inventory.setItem(last, selected);
+      player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, first.copy());
+      player.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, selected.copy());
+      check(DefenseEquipment.find(player).stack() == selected, "last glove takes priority over hands");
+      var replacement = new ItemStack(StormContent.FLASHLIGHT);
+      DefenseEquipment.find(player).replace().accept(replacement);
+      check(
+          inventory.getItem(last) == replacement && inventory.getItem(0) == first,
+          "glove replacement changes only the selected slot");
+      check(inventory.hasCosmeticItems(), "cosmetic glove fixture available");
+      inventory.setCosmeticItem(0, selected);
+      check(
+          DefenseEquipment.find(player).stack() == selected,
+          "cosmetic glove takes priority over all ordinary glove slots");
+      var lastCosmetic = first.copy();
+      inventory.setCosmeticItem(last, lastCosmetic);
+      check(
+          DefenseEquipment.find(player).stack() == lastCosmetic,
+          "last cosmetic glove takes priority");
+      var cosmeticReplacement = new ItemStack(StormContent.TALISMAN);
+      DefenseEquipment.find(player).replace().accept(cosmeticReplacement);
+      check(
+          inventory.getCosmeticItem(last) == cosmeticReplacement
+              && inventory.getItem(last) == replacement,
+          "cosmetic replacement leaves ordinary glove untouched");
+      for (int i = 0; i < inventory.getContainerSize(); i++) {
+        inventory.setItem(i, ItemStack.EMPTY);
+        inventory.setCosmeticItem(i, ItemStack.EMPTY);
+      }
+      check(
+          DefenseEquipment.find(player).stack() == player.getMainHandItem(),
+          "main hand takes priority over offhand when gloves are empty");
+      DefenseEquipment.find(player).replace().accept(replacement);
+      check(player.getMainHandItem() == replacement, "main-hand replacement targets main hand");
+      player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(Items.STONE));
+      check(
+          DefenseEquipment.find(player).stack() == player.getOffhandItem(),
+          "non-defense main hand falls back to offhand");
+      DefenseEquipment.find(player).replace().accept(cosmeticReplacement);
+      check(player.getOffhandItem() == cosmeticReplacement, "offhand replacement targets offhand");
+      player.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, ItemStack.EMPTY);
+      var empty = DefenseEquipment.find(player);
+      check(empty.stack().isEmpty(), "missing defense returns empty stack");
+      empty.replace().accept(replacement);
+      check(
+          player.getMainHandItem().is(Items.STONE) && player.getOffhandItem().isEmpty(),
+          "empty defense replacement leaves both hands untouched");
+    } finally {
+      for (int i = 0; i < inventory.getContainerSize(); i++) {
+        inventory.setItem(i, ItemStack.EMPTY);
+        inventory.setCosmeticItem(i, ItemStack.EMPTY);
+      }
+      gameplay.cosmeticSlots = cosmeticsEnabled;
+      inventory.removeSlotCountModifier(extraSlots);
+      inventory.updateSlotCount();
+      player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, mainHand);
+      player.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, offHand);
     }
   }
 

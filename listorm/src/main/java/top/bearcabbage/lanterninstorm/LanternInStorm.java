@@ -24,7 +24,7 @@ public final class LanternInStorm implements ModInitializer {
 
   @Override
   public void onInitialize() {
-    new AnnoyingEffects().onInitialize();
+    AnnoyingEffects.initialize();
     StormContent.initialize();
     BeginningLanternEntity.initialize();
     BorderParticles.initialize();

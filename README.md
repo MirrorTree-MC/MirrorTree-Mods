@@ -23,4 +23,4 @@ Windows 使用 `gradlew.bat` 和 `python`。发行包位于 `build/distributions
 
 发行包中的 `mods/` 合并到对应实例的模组目录；先移走同 ID 的旧版本。Fabric API、Trinkets Updated、Pufferfish’s Skills、Starry Skies 等第三方依赖仍需单独安装，具体版本见包内说明。现有世界、技能树数据包和数据库连接配置不会随包分发。
 
-维护入口：[AGENTS.md](AGENTS.md)。历史与兼容边界：[迁移记录](docs/MIGRATION.md)。各模块许可证：[LICENSES.md](LICENSES.md)。
+维护入口：[AGENTS.md](AGENTS.md)。历史与兼容边界：[迁移记录](docs/MIGRATION.md)。各模块许可证：[LICENSES.md](LICENSES.md)。代码清理与静态性能分析：[审查记录](docs/CODE_REVIEW.md)。

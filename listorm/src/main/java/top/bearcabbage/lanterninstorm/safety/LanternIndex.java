@@ -35,6 +35,7 @@ public final class LanternIndex {
     if (chunks == null) return false;
     BlockPos center = BlockPos.containing(player);
     int cx = center.getX() >> 4, cz = center.getZ() >> 4;
+    boolean vanilla = level.dimension().identifier().getNamespace().equals("minecraft");
     for (int x = cx - 1; x <= cx + 1; x++)
       for (int z = cz - 1; z <= cz + 1; z++) {
         if (!level.hasChunk(x, z)) continue;
@@ -49,8 +50,7 @@ public final class LanternIndex {
             continue;
           }
           if (!state.getValue(SpiritLanternBlock.STARTUP)) continue;
-          int radius =
-              level.dimension().identifier().getNamespace().equals("minecraft") ? 8 : lamp.radius();
+          int radius = vanilla ? 8 : lamp.radius();
           if (within(player, Vec3.atCenterOf(pos), radius)) return true;
         }
       }

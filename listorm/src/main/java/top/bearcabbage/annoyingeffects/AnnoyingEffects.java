@@ -3,7 +3,6 @@ package top.bearcabbage.annoyingeffects;
 import static net.minecraft.world.effect.MobEffects.*;
 
 import java.util.*;
-import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -11,13 +10,11 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.effect.*;
 import net.minecraft.world.entity.ai.attributes.*;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.*;
 import top.bearcabbage.annoyingeffects.effect.*;
 import top.bearcabbage.annoyingeffects.utils.ConfigReadAndWrite;
 
-public class AnnoyingEffects implements ModInitializer {
+public final class AnnoyingEffects {
   public static final String MOD_ID = "annoyingeffects";
-  public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
   private static final ConfigReadAndWrite config =
       new ConfigReadAndWrite(
           FabricLoader.getInstance().getConfigDir().resolve("AnnoyingEffects.json"));
@@ -25,7 +22,7 @@ public class AnnoyingEffects implements ModInitializer {
       Registry.registerForHolder(
           BuiltInRegistries.MOB_EFFECT,
           Identifier.fromNamespaceAndPath(MOD_ID, "anorexia"),
-          new AnorexiaStatusEffect());
+          new AnnoyingStatusEffect());
   public static final Holder<MobEffect> CARROT_CURSE =
       Registry.registerForHolder(
           BuiltInRegistries.MOB_EFFECT,
@@ -55,27 +52,27 @@ public class AnnoyingEffects implements ModInitializer {
       Registry.registerForHolder(
           BuiltInRegistries.MOB_EFFECT,
           Identifier.fromNamespaceAndPath(MOD_ID, "controls_always_jump"),
-          new ControlsAlwaysJumpStatusEffect());
+          new AnnoyingStatusEffect());
   public static final Holder<MobEffect> CONTROLS_CHAOTIC_USE =
       Registry.registerForHolder(
           BuiltInRegistries.MOB_EFFECT,
           Identifier.fromNamespaceAndPath(MOD_ID, "controls_chaotic_use"),
-          new ControlsChaoticUseStatusEffect());
+          new AnnoyingStatusEffect());
   public static final Holder<MobEffect> CONTROLS_CRAB =
       Registry.registerForHolder(
           BuiltInRegistries.MOB_EFFECT,
           Identifier.fromNamespaceAndPath(MOD_ID, "controls_crab"),
-          new ControlsCrabStatusEffect());
+          new AnnoyingStatusEffect());
   public static final Holder<MobEffect> CONTROLS_MIRROR =
       Registry.registerForHolder(
           BuiltInRegistries.MOB_EFFECT,
           Identifier.fromNamespaceAndPath(MOD_ID, "controls_mirror"),
-          new ControlsMirrorStatusEffect());
+          new AnnoyingStatusEffect());
   public static final Holder<MobEffect> CONTROLS_SHORT_REACH =
       Registry.registerForHolder(
           BuiltInRegistries.MOB_EFFECT,
           Identifier.fromNamespaceAndPath(MOD_ID, "controls_short_reach"),
-          new ControlsShortReachStatusEffect()
+          new AnnoyingStatusEffect()
               .addAttributeModifier(
                   Attributes.BLOCK_INTERACTION_RANGE,
                   Identifier.parse("annoyingeffect.controls_short_range"),
@@ -100,17 +97,17 @@ public class AnnoyingEffects implements ModInitializer {
       Registry.registerForHolder(
           BuiltInRegistries.MOB_EFFECT,
           Identifier.fromNamespaceAndPath(MOD_ID, "curse_of_vanishing"),
-          new CurseOfVanishingStatusEffect());
+          new AnnoyingStatusEffect());
   public static final Holder<MobEffect> DISABLE_CRAFTING_TABLE =
       Registry.registerForHolder(
           BuiltInRegistries.MOB_EFFECT,
           Identifier.fromNamespaceAndPath(MOD_ID, "disable_crafting_table"),
-          new DisableCraftingTableStatusEffect());
+          new AnnoyingStatusEffect());
   public static final Holder<MobEffect> DISABLE_INVENTORY =
       Registry.registerForHolder(
           BuiltInRegistries.MOB_EFFECT,
           Identifier.fromNamespaceAndPath(MOD_ID, "disable_inventory"),
-          new DisableInventoryStatusEffect());
+          new AnnoyingStatusEffect());
   public static final Holder<MobEffect> DISABLE_SLEEPING =
       Registry.registerForHolder(
           BuiltInRegistries.MOB_EFFECT,
@@ -125,7 +122,7 @@ public class AnnoyingEffects implements ModInitializer {
       Registry.registerForHolder(
           BuiltInRegistries.MOB_EFFECT,
           Identifier.fromNamespaceAndPath(MOD_ID, "heaviness"),
-          new HeavinessStatusEffect()
+          new AnnoyingStatusEffect()
               .addAttributeModifier(
                   Attributes.SAFE_FALL_DISTANCE,
                   Identifier.parse("annoyingeffect.heaviness.jump"),
@@ -150,7 +147,7 @@ public class AnnoyingEffects implements ModInitializer {
       Registry.registerForHolder(
           BuiltInRegistries.MOB_EFFECT,
           Identifier.fromNamespaceAndPath(MOD_ID, "misfortune"),
-          new MisfortuneStatusEffect());
+          new AnnoyingStatusEffect());
   public static final Holder<MobEffect> OPPRESSED =
       Registry.registerForHolder(
           BuiltInRegistries.MOB_EFFECT,
@@ -170,7 +167,7 @@ public class AnnoyingEffects implements ModInitializer {
       Registry.registerForHolder(
           BuiltInRegistries.MOB_EFFECT,
           Identifier.fromNamespaceAndPath(MOD_ID, "repeater"),
-          new RepeaterStatusEffect());
+          new AnnoyingStatusEffect());
   public static final Holder<MobEffect> SCHIZOPHRENIA =
       Registry.registerForHolder(
           BuiltInRegistries.MOB_EFFECT,
@@ -180,7 +177,7 @@ public class AnnoyingEffects implements ModInitializer {
       Registry.registerForHolder(
           BuiltInRegistries.MOB_EFFECT,
           Identifier.fromNamespaceAndPath(MOD_ID, "slippy"),
-          new SlippyStatusEffect());
+          new AnnoyingStatusEffect());
   public static final Holder<MobEffect> SPIN =
       Registry.registerForHolder(
           BuiltInRegistries.MOB_EFFECT,
@@ -210,7 +207,7 @@ public class AnnoyingEffects implements ModInitializer {
       Registry.registerForHolder(
           BuiltInRegistries.MOB_EFFECT,
           Identifier.fromNamespaceAndPath(MOD_ID, "voiceless"),
-          new VoicelessStatusEffect());
+          new AnnoyingStatusEffect());
   public static final Holder<MobEffect> VULNERABLE =
       Registry.registerForHolder(
           BuiltInRegistries.MOB_EFFECT,
@@ -225,12 +222,12 @@ public class AnnoyingEffects implements ModInitializer {
   public static final Map<Holder<MobEffect>, Map<String, Integer>> STATUS_EFFECT_MAP =
       new LinkedHashMap<>();
 
-  public void onInitialize() {
+  public static void initialize() {
     loadStatusEffects();
     config.save();
   }
 
-  private void loadStatusEffects() {
+  private static void loadStatusEffects() {
     STATUS_EFFECT_MAP.put(ANOREXIA, config.getStatusParameters("anorexia", paraMap(200, 200)));
     STATUS_EFFECT_MAP.put(
         CARROT_CURSE, config.getStatusParameters("carrot_curse", paraMap(60, 1200)));
@@ -315,16 +312,16 @@ public class AnnoyingEffects implements ModInitializer {
     STATUS_EFFECT_MAP.put(WITHER, config.getStatusParameters("wither", paraMap(10, 600)));
   }
 
-  private Map<String, Integer> paraMap(Integer duration, Integer interval) {
+  private static Map<String, Integer> paraMap(Integer duration, Integer interval) {
     return paraMap(duration, interval, null);
   }
 
-  private Map<String, Integer> paraMap(
+  private static Map<String, Integer> paraMap(
       Integer duration, Integer interval, @Nullable Integer amplifier) {
     return paraMap(duration, interval, amplifier, null, null, null);
   }
 
-  private Map<String, Integer> paraMap(
+  private static Map<String, Integer> paraMap(
       Integer duration,
       Integer interval,
       @Nullable Integer amplifier,

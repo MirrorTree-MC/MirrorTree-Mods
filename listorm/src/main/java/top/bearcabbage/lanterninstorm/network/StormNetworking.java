@@ -21,6 +21,7 @@ public final class StormNetworking {
     Bar prev = LAST.get(player.getUUID());
     if (stage < 0) stage = prev == null ? 0 : prev.stage;
     stage = Math.clamp(stage, 0, 6);
+    if (prev != null && prev.display == display && prev.stage == stage) return;
     if (prev == null || prev.display != display)
       ServerPlayNetworking.send(player, new AnnoyingBarDisplayPayload(display));
     if (prev == null || prev.stage != stage)

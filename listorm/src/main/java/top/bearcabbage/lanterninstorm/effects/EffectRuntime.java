@@ -1,6 +1,5 @@
 package top.bearcabbage.lanterninstorm.effects;
 
-import java.util.*;
 import net.fabricmc.fabric.api.event.player.*;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;

@@ -8,6 +8,9 @@ import net.puffish.skillsmod.api.SkillsAPI;
 import top.bearcabbage.annoyingeffects.effect.CarrotCurseStatusEffect;
 
 public final class ProgressionService {
+  private static final Identifier BEDROOM =
+      Identifier.fromNamespaceAndPath("mirrortree", "bedroom");
+
   public static int experience(String type, int count, int amount) {
     return switch (type) {
       case "food" -> 10 / Math.max(1, count) + 1;
@@ -36,11 +39,7 @@ public final class ProgressionService {
 
   public static void tick(ServerPlayer player) {
     if (player.tickCount % 20 != 0) return;
-    if (!player
-        .level()
-        .dimension()
-        .identifier()
-        .equals(Identifier.fromNamespaceAndPath("mirrortree", "bedroom")))
+    if (!player.level().dimension().identifier().equals(BEDROOM))
       player
           .level()
           .getBiome(player.blockPosition())
