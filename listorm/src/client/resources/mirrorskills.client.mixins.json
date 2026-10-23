@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "top.bearcabbage.mirrorskills.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "MinecraftClientMixin",
+    "client.AbstractClientPlayerEntityMixin",
+    "client.BowUseDurationMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

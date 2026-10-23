@@ -1,0 +1,70 @@
+{
+	"normal": {
+		"unidirectional": [
+			[
+				"melee_root",
+				"health_1"
+			],
+			[
+				"health_1",
+				"periodic_absorption"
+			],
+			[
+				"periodic_absorption",
+				"invincible"
+			],
+			[
+				"invincible",
+				"melee_damage_1"
+			],
+			[
+				"melee_damage_1",
+				"melee_resistance_shred"
+			],
+			[
+				"melee_resistance_shred",
+				"invincible_cd_reduction"
+			],
+			[
+				"invincible_cd_reduction",
+				"melee_critical_multiplier"
+			],
+			[
+				"ranged_root",
+				"stamina_boost"
+			],
+			[
+				"stamina_boost",
+				"free_tipped_arrows"
+			],
+			[
+				"free_tipped_arrows",
+				"ranged_critical"
+			],
+			[
+				"ranged_critical",
+				"ranged_damage_1"
+			],
+			[
+				"ranged_damage_1",
+				"projectile_speed"
+			],
+			[
+				"projectile_speed",
+				"ranged_resistance_shred"
+			],
+			[
+				"ranged_resistance_shred",
+				"bow_charging"
+			]
+		]
+	},
+	"exclusive": {
+		"bidirectional": [
+			[
+				"ranged_root",
+				"melee_root"
+			]
+		]
+	}
+}

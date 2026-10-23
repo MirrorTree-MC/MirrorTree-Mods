@@ -5,10 +5,12 @@
   "environment": "*",
   "entrypoints": {
     "fabric-client-gametest": [
-      "top.bearcabbage.lanterninstorm.test.StormGameTest"
+      "top.bearcabbage.lanterninstorm.test.StormGameTest",
+      "top.bearcabbage.lanterninstorm.test.SkillsClientGameTest"
     ],
     "fabric-gametest": [
-      "top.bearcabbage.lanterninstorm.test.StormServerGameTest"
+      "top.bearcabbage.lanterninstorm.test.StormServerGameTest",
+      "top.bearcabbage.lanterninstorm.test.SkillsServerGameTest"
     ]
   },
   "depends": {

@@ -5,6 +5,8 @@
 | 模块 | 许可证 | 原文 |
 | --- | --- | --- |
 | LIStorm | MIT | [listorm/LICENSE](listorm/LICENSE)；[合入内容的许可](listorm/licenses/) |
+| MirrorSkills（合入 LIStorm） | CC0 1.0 | [原文](listorm/licenses/MirrorSkills-LICENSE) |
+| Serenia 默认技能树（合入 LIStorm） | Unlicense | [原文](listorm/licenses/MirrorTree-Skill-Tree-LICENSE) |
 | MirrorTree Journey | CC0 1.0 | [journey/LICENSE](journey/LICENSE) |
 | Sync Sign Notice | MIT | [sync-sign-notice/LICENSE](sync-sign-notice/LICENSE) |
 

@@ -3,12 +3,16 @@
   "id": "lantern-in-storm",
   "version": "${version}",
   "name": "Lantern in Storm",
-  "description": "Lantern safety, nightmare effects, and exploration experience.",
+  "description": "Lantern safety, nightmare effects, exploration experience, skills and default skill trees.",
   "authors": [
     "Leaves of MirrorTree",
     "AC-Mnky"
   ],
-  "license": "MIT",
+  "license": [
+    "MIT",
+    "CC0-1.0",
+    "Unlicense"
+  ],
   "environment": "*",
   "depends": {
     "fabricloader": ">=0.19.5",
@@ -16,7 +20,8 @@
     "java": ">=25",
     "fabric-api": "*",
     "trinkets_updated": ">=4.0.1",
-    "puffish_skills": ">=0.19.1"
+    "puffish_skills": ">=0.19.2",
+    "puffish_attributes": ">=0.8.2"
   },
   "entrypoints": {
     "main": [
@@ -31,11 +36,17 @@
     {
       "config": "storm.client.mixins.json",
       "environment": "client"
+    },
+    "mirrorskills.mixins.json",
+    {
+      "config": "mirrorskills.client.mixins.json",
+      "environment": "client"
     }
   ],
   "provides": [
     "annoyingeffects",
-    "spirit-in-storm"
+    "spirit-in-storm",
+    "mirrorskills"
   ],
   "contact": {
     "sources": "https://github.com/MirrorTree-MC/MirrorTree-Mods/tree/main/listorm"

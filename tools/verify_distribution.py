@@ -39,6 +39,19 @@ def check_jar(data, module, version):
             mixin = json.loads(jar.read(config))
             for name in mixin.get("mixins", []) + mixin.get("client", []) + mixin.get("server", []):
                 assert (mixin["package"] + "." + name).replace(".", "/") + ".class" in names, (module, name)
+        if module == "listorm":
+            assert "mirrorskills" in metadata["provides"]
+            for name in ("MirrorSkills", "client/MirrorSkillsClient", "data/SkillData"):
+                assert f"top/bearcabbage/mirrorskills/{name}.class" in names, name
+            assert "licenses/MirrorSkills-LICENSE" in names
+            manifest = json.loads((ROOT / "docs/skill-tree-source.json").read_text())["sha256"]
+            for name, digest in manifest.items():
+                entry = "licenses/MirrorTree-Skill-Tree-LICENSE" if name == "LICENSE" else name
+                assert sha256(jar.read(entry)).hexdigest() == digest, entry
+            for category, count in (("combat", 16), ("support", 42)):
+                skills = json.loads(jar.read(
+                    f"data/mirrortree/puffish_skills/categories/{category}/skills.json"))
+                assert len(skills) == count, category
         if module == "sync-sign-notice":
             nested = [entry["file"] for entry in metadata.get("jars", []) if "mysql-connector-j" in entry["file"]]
             assert len(nested) == 1, "Missing bundled JDBC driver"

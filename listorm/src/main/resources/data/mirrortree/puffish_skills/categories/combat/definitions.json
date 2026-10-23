@@ -1,0 +1,343 @@
+{
+  "root_melee_damage+10%": {
+    "title": "+10% 近战伤害",
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "icon": {
+      "type": "effect",
+      "data": {
+        "effect": "strength"
+      }
+    },
+    "rewards": [
+      {
+        "type": "puffish_skills:attribute",
+        "data": {
+          "attribute": "puffish_attributes:melee_damage",
+          "value": 0.1,
+          "operation": "multiply_total"
+        }
+      }
+    ]
+  },
+  "health+4": {
+    "title": "+4 生命值",
+    "icon": {
+      "type": "effect",
+      "data": {
+        "effect": "health_boost"
+      }
+    },
+    "rewards": [
+      {
+        "type": "puffish_skills:attribute",
+        "data": {
+          "attribute": "minecraft:max_health",
+          "value": 4,
+          "operation": "addition"
+        }
+      }
+    ]
+  },
+  "periodic_absorption": {
+    "title": "Lv1 伤害吸收",
+    "icon": {
+      "type": "effect",
+      "data": {
+        "effect": "absorption"
+      }
+    },
+    "rewards": [
+      {
+        "type": "puffish_skills:command",
+        "data": {
+          "unlock_command": "mirrorskills grant @s periodic_absorption",
+          "lock_command": "mirrorskills revoke @s periodic_absorption"
+        }
+      }
+    ]
+  },
+  "invincible": {
+    "title": "5s 无敌",
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "totem_of_undying"
+      }
+    },
+    "rewards": [
+      {
+        "type": "puffish_skills:command",
+        "data": {
+          "unlock_command": "mirrorskills grant @s invincible",
+          "lock_command": "mirrorskills revoke @s invincible"
+        }
+      }
+    ]
+  },
+  "melee_damage+10%": {
+    "title": "+10% 近战伤害",
+    "icon": {
+      "type": "effect",
+      "data": {
+        "effect": "strength"
+      }
+    },
+    "rewards": [
+      {
+        "type": "puffish_skills:attribute",
+        "data": {
+          "attribute": "puffish_attributes:melee_damage",
+          "value": 0.1,
+          "operation": "multiply_total"
+        }
+      }
+    ]
+  },
+  "melee_resistance_shred-30%": {
+    "title": "+30% 削韧",
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "chainmail_chestplate"
+      }
+    },
+    "rewards": [
+      {
+        "type": "puffish_skills:attribute",
+        "data": {
+          "attribute": "puffish_attributes:melee_resistance_shred",
+          "value": 0.3,
+          "operation": "multiply_total"
+        }
+      }
+    ]
+  },
+  "invincible_cd-30s": {
+    "title": "-30s 无敌CD",
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "clock"
+      }
+    },
+    "rewards": [
+      {
+        "type": "puffish_skills:command",
+        "data": {
+          "unlock_command": "mirrorskills param @s invincible_cd 90",
+          "lock_command": "mirrorskills param @s invincible_cd 120"
+        }
+      }
+    ]
+  },
+  "critical_hit_multiplier_2x": {
+    "title": "暴击倍率2x",
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "icon": {
+      "type": "effect",
+      "data": {
+        "effect": "strength"
+      }
+    },
+    "rewards": [
+      {
+        "type": "puffish_skills:command",
+        "data": {
+          "unlock_command": "mirrorskills param @s crit_multiplier 2.0",
+          "lock_command": "mirrorskills param @s crit_multiplier 1.5"
+        }
+      }
+    ]
+  },
+  "root_ranged_damage+10%": {
+    "title": "+10% 远程伤害",
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "goal"
+      }
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "bow"
+      }
+    },
+    "rewards": [
+      {
+        "type": "puffish_skills:attribute",
+        "data": {
+          "attribute": "puffish_attributes:ranged_damage",
+          "value": 0.1,
+          "operation": "multiply_total"
+        }
+      }
+    ]
+  },
+  "stamina+100%": {
+    "title": "+100% 耐力",
+    "icon": {
+      "type": "effect",
+      "data": {
+        "effect": "saturation"
+      }
+    },
+    "rewards": [
+      {
+        "type": "puffish_skills:attribute",
+        "data": {
+          "attribute": "puffish_attributes:stamina",
+          "value": 1,
+          "operation": "multiply_total"
+        }
+      }
+    ]
+  },
+  "projectile_speed+50%": {
+    "title": "+50% 弹道速度",
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "arrow"
+      }
+    },
+    "rewards": [
+      {
+        "type": "puffish_skills:attribute",
+        "data": {
+          "attribute": "puffish_attributes:bow_projectile_speed",
+          "value": 0.5,
+          "operation": "multiply_total"
+        }
+      },
+      {
+        "type": "puffish_skills:attribute",
+        "data": {
+          "attribute": "puffish_attributes:crossbow_projectile_speed",
+          "value": 0.5,
+          "operation": "multiply_total"
+        }
+      }
+    ]
+  },
+  "free_tipped_arrows": {
+    "title": "免费药箭",
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "tipped_arrow"
+      }
+    },
+    "rewards": [
+      {
+        "type": "puffish_skills:command",
+        "data": {
+          "unlock_command": "mirrorskills grant @s tipped_arrow",
+          "lock_command": "mirrorskills revoke @s tipped_arrow"
+        }
+      }
+    ]
+  },
+  "ranged_damage+10%": {
+    "title": "+10% 远程伤害",
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "bow"
+      }
+    },
+    "rewards": [
+      {
+        "type": "puffish_skills:attribute",
+        "data": {
+          "attribute": "puffish_attributes:ranged_damage",
+          "value": 0.1,
+          "operation": "multiply_total"
+        }
+      }
+    ]
+  },
+  "ranged_resistance_shred-30%": {
+    "title": "+30% 远程削韧",
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "shield"
+      }
+    },
+    "rewards": [
+      {
+        "type": "puffish_skills:attribute",
+        "data": {
+          "attribute": "puffish_attributes:ranged_resistance_shred",
+          "value": 0.3,
+          "operation": "multiply_total"
+        }
+      }
+    ]
+  },
+  "ranged_critical_hit": {
+    "title": "远程暴击",
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "crossbow"
+      }
+    },
+    "rewards": [
+      {
+        "type": "puffish_skills:command",
+        "data": {
+          "unlock_command": "mirrorskills grant @s bow_dynamic_crit",
+          "lock_command": "mirrorskills revoke @s bow_dynamic_crit"
+        }
+      }
+    ]
+  },
+  "bow_charging_acceleration": {
+    "title": "快速拉弓",
+    "frame": {
+      "type": "advancement",
+      "data": {
+        "frame": "challenge"
+      }
+    },
+    "icon": {
+      "type": "item",
+      "data": {
+        "item": "bow"
+      }
+    },
+    "rewards": [
+      {
+        "type": "puffish_skills:command",
+        "data": {
+          "unlock_command": "mirrorskills grant @s bow_fast_charge",
+          "lock_command": "mirrorskills revoke @s bow_fast_charge"
+        }
+      }
+    ]
+  }
+}

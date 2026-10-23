@@ -1,0 +1,22 @@
+{
+  "message.mirrorskills.cooldown": "技能冷却中，剩余 %d 秒。",
+  "message.mirrorskills.invisibility_activated": "隐身已激活！",
+  "message.mirrorskills.healing_activated": "治疗技能触发！",
+  "message.mirrorskills.invincible_activated": "无敌状态已激活！",
+  "message.mirrorskills.tipped_arrow_activated": "药水箭矢已发放！",
+  "command.mirrorskills.potion_time.updated": "已更新 %s 的药水时间：增益+%s(总计: %s)，减益-%s(总计: %s)",
+  "command.mirrorskills.potion_level.updated": "已更新 %s 的药水等级：%s (总计: %s)",
+  "command.mirrorskills.crit_multiplier.updated": "已更新玩家 %s 的暴击倍率为 %.2f (当前: %.2f)",
+  "command.mirrorskills.invincible_cd.updated": "已更新 %s 的无敌状态冷却时间为 %.1f 秒。",
+  "command.mirrorskills.grant.success": "已授予 %2$s 技能 %1$s",
+  "command.mirrorskills.revoke.reset": "已重置 %s 的技能参数。",
+  "command.mirrorskills.revoke.success": "已从 %2$s 撤销技能 %1$s",
+  "command.mirrorskills.death.no_skill": "你没有死亡回溯技能。",
+  "command.mirrorskills.death.success": "已传送到上次死亡地点。",
+  "command.mirrorskills.death.no_location": "没有存储的死亡地点。",
+  "key.mirrorskills.invisible": "施放隐身",
+  "key.mirrorskills.dash": "施放冲刺",
+  "key.mirrorskills.invincible": "激活无敌状态",
+  "category.mirrorskills.skills": "棱镜树技能",
+  "category.mirrorskills.general": "棱镜树技能"
+}

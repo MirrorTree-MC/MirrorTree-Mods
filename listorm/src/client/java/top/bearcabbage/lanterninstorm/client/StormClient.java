@@ -33,6 +33,7 @@ public final class StormClient implements ClientModInitializer {
 
   @Override
   public void onInitializeClient() {
+    top.bearcabbage.mirrorskills.client.MirrorSkillsClient.initialize();
     var loader = net.fabricmc.loader.api.FabricLoader.getInstance();
     var container = loader.getModContainer("lantern-in-storm").orElseThrow();
     if (loader.isModLoaded("biomesoplenty"))

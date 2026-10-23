@@ -1,0 +1,11 @@
+{
+	"unlocked_by_default": true,
+	"title": "辅助",
+	"icon": {
+		"type": "item",
+		"data": {
+			"item": "golden_apple"
+		}
+	},
+	"background": "textures/gui/advancements/backgrounds/stone.png"
+}

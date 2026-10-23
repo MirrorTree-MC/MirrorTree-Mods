@@ -12,13 +12,13 @@
 | `journey/` | [BaicaiBear/MirrorTree-Journey](https://github.com/BaicaiBear/MirrorTree-Journey) | `6bd354e5f6dd18778eba06b260dad220db9d64b2` |
 | `sync-sign-notice/` | 用户提供的 ZIP 整理出的本地源码仓库 | `bf066f0048ceccb27884d38c34fb35f3b41a8c40` |
 
-Journey 导入提交已经合并原 master 与 server 历史，原 server 提交 `b9bc5b4569e974861841d03e95ce1c636e08e10c` 仍可追溯。Sync Sign Notice 仅有从 ZIP 导入后建立的本地提交；本次没有恢复其原上游仓库历史。原独立仓库保留作为回溯来源，本次不修改或归档它们。MirrorSkills 不属于本次三个模块的合并范围。
+Journey 导入提交已经合并原 master 与 server 历史，原 server 提交 `b9bc5b4569e974861841d03e95ce1c636e08e10c` 仍可追溯。Sync Sign Notice 仅有从 ZIP 导入后建立的本地提交；本次没有恢复其原上游仓库历史。原独立仓库保留作为回溯来源，本次不修改或归档它们。后续 MirrorSkills 整合进 `listorm/`，保留其可用提交 `3057c270b9a1612f85cca34cb002d1d37f162859` 为合并历史；不新增第四个模块，详见[技能整合](SKILLS_INTEGRATION.md)。
 
 ## 兼容边界
 
 | 模块 | 保留的 mod ID | 保留的版本 |
 | --- | --- | --- |
-| LIStorm | `lantern-in-storm` | `6.0.0-alpha.4+26.1.2` |
+| LIStorm | `lantern-in-storm` | `6.0.0-alpha.5+26.1.2` |
 | Journey | `mirrortree` | `6.1.0+26.1.2` |
 | Sync Sign Notice | `sync-sign-notice` | `1.1.0+26.1.2` |
 
@@ -30,7 +30,7 @@ Journey 导入提交已经合并原 master 与 server 历史，原 server 提交
 
 根目录管理唯一 wrapper 和共用工具链，构建与校验在本地执行。Journey 通过 Gradle 项目依赖编译 LIStorm API，构建不再要求相邻的旧 LIStorm 仓库。各模块保持独立版本；发行包名称标识 Minecraft 目标版本，发布标签标识整批构建。
 
-客户端包包含三个正式模组，服务端包只包含 LIStorm 与 Journey。第三方模组、正式服配置、公告数据、技能树数据包、世界和玩家存档均不随包分发。MySQL Connector/J 仍由公告模组按原有方式内嵌。
+客户端包包含三个正式模组，服务端包只包含 LIStorm 与 Journey。LIStorm 同时包含 MirrorSkills 和 Serenia 默认技能树。第三方模组、正式服配置、公告数据、世界和玩家存档均不随包分发。MySQL Connector/J 仍由公告模组按原有方式内嵌。
 
 `build` 构建模块及发行包并执行已接入的自动检查；`assembleDistribution` 可单独打包。`tools/verify_distribution.py` 检查分发内容并生成 `build/distributions/SHA256SUMS`。GitHub Actions 工作流已移除；安装包和校验文件由本地生成，发布标签不触发自动发布。
 

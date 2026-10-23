@@ -24,6 +24,7 @@ public final class LanternInStorm implements ModInitializer {
 
   @Override
   public void onInitialize() {
+    top.bearcabbage.mirrorskills.MirrorSkills.initialize();
     AnnoyingEffects.initialize();
     StormContent.initialize();
     BeginningLanternEntity.initialize();

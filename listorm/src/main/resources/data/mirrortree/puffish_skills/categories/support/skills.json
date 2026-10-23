@@ -1,0 +1,254 @@
+{
+	"speed_root": {
+		"definition": "sprinting_speed+10%",
+		"x": 16.165807537309522,
+		"y": -28,
+		"root": true
+	},
+	"stamina_root": {
+		"definition": "stamina+10%",
+		"x": 16.165807537309522,
+		"y": 28,
+		"root": true
+	},
+	"stamina_1": {
+		"definition": "stamina+10%",
+		"x": 48.49742261192857,
+		"y": 84,
+		"root": false
+	},
+	"stamina_2": {
+		"definition": "stamina+10%",
+		"x": 80.82903768654761,
+		"y": 140,
+		"root": false
+	},
+	"stamina_3": {
+		"definition": "stamina+10%",
+		"x": 113.16065276116666,
+		"y": 196,
+		"root": false
+	},
+	"speed_1": {
+		"definition": "sprinting_speed+10%",
+		"x": 48.49742261192857,
+		"y": -84,
+		"root": false
+	},
+	"dashing": {
+		"definition": "dashing",
+		"x": 113.16065276116666,
+		"y": -196,
+		"root": false
+	},
+	"speed_2": {
+		"definition": "sprinting_speed+10%",
+		"x": 80.82903768654761,
+		"y": -140,
+		"root": false
+	},
+	"mining_root": {
+		"definition": "mining_speed+10%",
+		"x": -32.331615074619044,
+		"y": 0,
+		"root": true
+	},
+	"mining_1": {
+		"definition": "mining_speed+10%",
+		"x": -96.99484522385714,
+		"y": 0,
+		"root": false
+	},
+	"mining_2": {
+		"definition": "mining_speed+10%",
+		"x": -161.65807537309522,
+		"y": 0,
+		"root": false
+	},
+	"mining_3": {
+		"definition": "mining_speed+10%",
+		"x": -226.32130552233332,
+		"y": 0,
+		"root": false
+	},
+	"fortune_1": {
+		"definition": "fortune+0.1",
+		"x": -129.32646029847618,
+		"y": 56,
+		"root": false
+	},
+	"fortune_2": {
+		"definition": "fortune+0.1",
+		"x": -129.32646029847618,
+		"y": -56,
+		"root": false
+	},
+	"fortune_3": {
+		"definition": "fortune+0.1",
+		"x": -258.65292059695236,
+		"y": -56,
+		"root": false
+	},
+	"fortune_4": {
+		"definition": "fortune+0.1",
+		"x": -258.65292059695236,
+		"y": 56,
+		"root": false
+	},
+	"healing_1": {
+		"definition": "healing+1",
+		"x": 16.16580753730952,
+		"y": 140,
+		"root": false
+	},
+	"healing_2": {
+		"definition": "healing+1",
+		"x": 113.16065276116666,
+		"y": 84,
+		"root": false
+	},
+	"healing_3": {
+		"definition": "healing+1",
+		"x": 80.82903768654761,
+		"y": 252,
+		"root": false
+	},
+	"healing_4": {
+		"definition": "healing+1",
+		"x": 177.82388291040473,
+		"y": 196,
+		"root": false
+	},
+	"fall_reduction_1": {
+		"definition": "fall_reduction+10%",
+		"x": 16.165807537309533,
+		"y": -140,
+		"root": false
+	},
+	"fall_reduction_2": {
+		"definition": "fall_reduction+10%",
+		"x": 113.16065276116665,
+		"y": -84,
+		"root": false
+	},
+	"fall_reduction_3": {
+		"definition": "fall_reduction+10%",
+		"x": 80.82903768654762,
+		"y": -252,
+		"root": false
+	},
+	"fall_reduction_4": {
+		"definition": "fall_reduction+10%",
+		"x": 177.82388291040473,
+		"y": -196,
+		"root": false
+	},
+	"invisibility": {
+		"definition": "invisibility",
+		"x": 290.9845356715714,
+		"y": 0,
+		"root": false
+	},
+	"death_flashback": {
+		"definition": "death_flashback",
+		"x": 161.65807537309522,
+		"y": 0,
+		"root": false
+	},
+	"extreme_health": {
+		"definition": "extreme_health_healing",
+		"x": -80.82903768654761,
+		"y": 140,
+		"root": false
+	},
+	"life_steal": {
+		"definition": "life_steal",
+		"x": -145.4922678357857,
+		"y": 252,
+		"root": false
+	},
+	"effect_time": {
+		"definition": "effect_time+10%",
+		"x": -145.4922678357857,
+		"y": -252,
+		"root": false
+	},
+	"effect_level": {
+		"definition": "effect_level+1",
+		"x": -80.82903768654761,
+		"y": -140,
+		"root": false
+	},
+	"mining_4": {
+		"definition": "mining_speed+10%",
+		"x": -226.32130552233332,
+		"y": 112,
+		"root": false
+	},
+	"mining_5": {
+		"definition": "mining_speed+10%",
+		"x": -193.98969044771425,
+		"y": 168,
+		"root": false
+	},
+	"mining_6": {
+		"definition": "mining_speed+10%",
+		"x": -226.32130552233332,
+		"y": -112,
+		"root": false
+	},
+	"mining_7": {
+		"definition": "mining_speed+10%",
+		"x": -193.98969044771428,
+		"y": -168,
+		"root": false
+	},
+	"speed_3": {
+		"definition": "sprinting_speed+10%",
+		"x": 16.16580753730952,
+		"y": -252,
+		"root": false
+	},
+	"speed_4": {
+		"definition": "sprinting_speed+10%",
+		"x": -48.497422611928556,
+		"y": -252,
+		"root": false
+	},
+	"speed_5": {
+		"definition": "sprinting_speed+10%",
+		"x": 210.15549798502377,
+		"y": -140,
+		"root": false
+	},
+	"speed_6": {
+		"definition": "sprinting_speed+10%",
+		"x": 242.4871130596428,
+		"y": -84,
+		"root": false
+	},
+	"stamina_4": {
+		"definition": "stamina+10%",
+		"x": 210.15549798502377,
+		"y": 140,
+		"root": false
+	},
+	"stamina_5": {
+		"definition": "stamina+10%",
+		"x": 242.48711305964287,
+		"y": 84,
+		"root": false
+	},
+	"stamina_6": {
+		"definition": "stamina+10%",
+		"x": 16.16580753730952,
+		"y": 252,
+		"root": false
+	},
+	"stamina_7": {
+		"definition": "stamina+10%",
+		"x": -48.497422611928585,
+		"y": 252,
+		"root": false
+	}
+}

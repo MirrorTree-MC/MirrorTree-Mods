@@ -1,5 +1,5 @@
 group = 'top.bearcabbage.lanterninstorm'
-version = '6.0.0-alpha.4+26.1.2'
+version = '6.0.0-alpha.5+26.1.2'
 base { archivesName = 'lantern-in-storm-rebirth' }
 
 loom {
@@ -15,7 +15,9 @@ loom {
 dependencies {
     // Trinkets injects public Minecraft interfaces needed by dependent projects.
     api 'eu.pb4:trinkets:4.0.1+26.1'
-    implementation 'net.puffish:skillsmod:0.19.1+26.1:fabric'
+    // Pufferfish Skills 0.19.2 (26.1 Fabric), matching the deployed runtime.
+    implementation 'maven.modrinth:hqQqvaa4:Uhs6RdHK'
+    implementation 'net.puffish:attributesmod:0.8.2+26.1:fabric'
 }
 
 jar {
@@ -40,3 +42,12 @@ if (providers.gradleProperty('farmersDelightTestJar').isPresent()) {
 if (providers.gradleProperty('compatTestDir').isPresent()) {
     dependencies { gametestImplementation fileTree(dir: providers.gradleProperty('compatTestDir').get(), include: ['*.jar']) }
 }
+
+// Existing codec/copy regression uses a main class rather than JUnit.
+test { enabled = false }
+tasks.register('checkSkillData', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'top.bearcabbage.mirrorskills.SkillDataCheck'
+}
+check.dependsOn checkSkillData

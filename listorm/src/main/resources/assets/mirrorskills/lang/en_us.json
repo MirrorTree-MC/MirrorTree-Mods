@@ -1,0 +1,19 @@
+{
+  "message.mirrorskills.cooldown": "Skill on cooldown!",
+  "message.mirrorskills.invisibility_activated": "Invisibility Activated!",
+  "message.mirrorskills.healing_activated": "Extreme State Healing Activated!",
+  "command.mirrorskills.potion_time.updated": "Updated Potion Time for %s: Ben.+%s(Total: %s), Harm.-%s(Total: %s)",
+  "command.mirrorskills.potion_level.updated": "Updated Potion Level for %s: %s (Total: %s)",
+  "command.mirrorskills.invincible_cd.updated": "Updated Invincible State CD for %s to %.1fs.",
+  "command.mirrorskills.grant.success": "Granted skill %s to %s",
+  "command.mirrorskills.revoke.reset": "Revoked %s and reset params.",
+  "command.mirrorskills.revoke.success": "Revoked skill %s from %s",
+  "command.mirrorskills.death.no_skill": "You do not have the Death Flashback skill.",
+  "command.mirrorskills.death.success": "Teleported to last death location.",
+  "command.mirrorskills.death.no_location": "No death location stored.",
+  "key.mirrorskills.invisible": "Cast Invisibility",
+  "key.mirrorskills.dash": "Cast Dashing",
+  "key.mirrorskills.invincible": "Activate Invincible State",
+  "category.mirrorskills.skills": "MirrorTree Skills",
+  "category.mirrorskills.general": "MirrorTree Skills"
+}

@@ -1,0 +1,98 @@
+{
+	"ranged_root": {
+		"definition": "root_ranged_damage+10%",
+		"x": 31,
+		"y": -93,
+		"root": true
+	},
+	"health_1": {
+		"definition": "health+4",
+		"x": -31,
+		"y": -31,
+		"root": false
+	},
+	"periodic_absorption": {
+		"definition": "periodic_absorption",
+		"x": -31,
+		"y": 31,
+		"root": false
+	},
+	"invincible": {
+		"definition": "invincible",
+		"x": -31,
+		"y": 93,
+		"root": false
+	},
+	"melee_damage_1": {
+		"definition": "melee_damage+10%",
+		"x": -93,
+		"y": 93,
+		"root": false
+	},
+	"melee_resistance_shred": {
+		"definition": "melee_resistance_shred-30%",
+		"x": -93,
+		"y": 31,
+		"root": false
+	},
+	"invincible_cd_reduction": {
+		"definition": "invincible_cd-30s",
+		"x": -93,
+		"y": -31,
+		"root": false
+	},
+	"melee_critical_multiplier": {
+		"definition": "critical_hit_multiplier_2x",
+		"x": -93,
+		"y": -93,
+		"root": false
+	},
+	"stamina_boost": {
+		"definition": "stamina+100%",
+		"x": 31,
+		"y": -31,
+		"root": false
+	},
+	"projectile_speed": {
+		"definition": "projectile_speed+50%",
+		"x": 93,
+		"y": 31,
+		"root": false
+	},
+	"free_tipped_arrows": {
+		"definition": "free_tipped_arrows",
+		"x": 31,
+		"y": 31,
+		"root": false
+	},
+	"ranged_damage_1": {
+		"definition": "ranged_damage+10%",
+		"x": 93,
+		"y": 93,
+		"root": false
+	},
+	"ranged_resistance_shred": {
+		"definition": "ranged_resistance_shred-30%",
+		"x": 93,
+		"y": -31,
+		"root": false
+	},
+	"ranged_critical": {
+		"definition": "ranged_critical_hit",
+		"x": 31,
+		"y": 93,
+		"root": false
+	},
+	"bow_charging": {
+		"definition": "bow_charging_acceleration",
+		"x": 93,
+		"y": -93,
+		"root": false
+	},
+	"melee_root": {
+		"definition": "root_melee_damage+10%",
+		"x": -31,
+		"y": -93,
+		"root": true
+	}
+}

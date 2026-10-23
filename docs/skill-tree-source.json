@@ -1,0 +1,18 @@
+{
+  "source": "Serenia/Journey/datapacks/mirrortree-skill-tree",
+  "imported": "2026-10-23",
+  "sha256": {
+    "LICENSE": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e",
+    "data/mirrortree/puffish_skills/categories/combat/category.json": "1fe3382b0cfd004f931ec3e929bc1dc1b1b27b5026f94539ccdad4f13391c5e8",
+    "data/mirrortree/puffish_skills/categories/combat/connections.json": "1d09eb2b78c6366257b75b7c228f85b75ec84519f94a83e3f776b1660dd1b915",
+    "data/mirrortree/puffish_skills/categories/combat/definitions.json": "2d565cd1b2d1dfc167946a4a70108b4a2005f65d5682087da9e63d1a4295c022",
+    "data/mirrortree/puffish_skills/categories/combat/experience.json": "e2b0118d6850fcf1fa0a6729d5ac36e49873530694c562e24c961537f5b5af81",
+    "data/mirrortree/puffish_skills/categories/combat/skills.json": "14d5733f9f2daef911e8567569b11943f95f03c72f5e5a860a5abd980df02e13",
+    "data/mirrortree/puffish_skills/categories/support/category.json": "ac68c425e267603dad6c6e0381be9b161f3721051d70a1333be602257132621b",
+    "data/mirrortree/puffish_skills/categories/support/connections.json": "9476d1bc0cbd30f09c1f6997f66da1d619220af71a1a852cb0143e988dd22bb0",
+    "data/mirrortree/puffish_skills/categories/support/definitions.json": "181fbba6cfa4756755336479d9c6ec7015257c0d4c61ee85fb93ee36e708eff2",
+    "data/mirrortree/puffish_skills/categories/support/experience.json": "839b63f92a06cc6eb560ca37d4f77fcaf8c0c27a4abc7757786943801f6a9b97",
+    "data/mirrortree/puffish_skills/categories/support/skills.json": "8e910f46c89334995d29773942dcd6bf8c4920b3d37f73a1f7fbc2d14b2211ab",
+    "data/mirrortree/puffish_skills/config.json": "8203f41494c88e7702d3156b67ac10d9c5b4de70aba53e20c463d3dc1d45555b"
+  }
+}
