@@ -1,6 +1,6 @@
 # Lantern in Storm · 26.1.2
 
-把 Lantern in Storm、本地 Spirit in Storm 2.0.1、AnnoyingEffects ui 1.2.2 的内容合并到一个 Fabric 模组。当前版本 `6.0.0-alpha.3+26.1.2`，供新世界集成测试。与 StarryTrees 无关，不提供旧存档转换。
+把 Lantern in Storm、本地 Spirit in Storm 2.0.1、AnnoyingEffects ui 1.2.2 的内容合并到一个 Fabric 模组。当前版本 `6.0.0-alpha.4+26.1.2`，供新世界集成测试。与 StarryTrees 无关，不提供旧存档转换。
 
 ## 内容
 
@@ -39,23 +39,22 @@
 
 ## 开发
 
-使用 JDK 25 和附带的 Gradle 9.7.1 wrapper：
+从统一仓库根目录使用 JDK 25 和根目录 wrapper：
 
 ```sh
-export JAVA_HOME=/opt/homebrew/opt/openjdk@25/libexec/openjdk.jdk/Contents/Home
-export GRADLE_USER_HOME="$PWD/.gradle-home"
-./gradlew genSources build --no-daemon
-./gradlew runClientGameTest runGameTest --no-daemon
-python3 tools/audit_resources.py
+./gradlew :listorm:genSources :listorm:build --no-daemon
+./gradlew :listorm:runClientGameTest :listorm:runGameTest --no-daemon
 ```
 
-产物位于 `build/libs/`。`genSources` 生成官方名称的游戏源码；本机解包副本位于 `build/minecraft-sources/`。游戏源码和缓存不打入发行包。
+资源完整性脚本需在 `listorm/` 目录执行 `python3 tools/audit_resources.py`。
+
+本模块产物位于 `listorm/build/libs/`。完整分发包与维护流程见根目录 [README](../README.md) 和 [AGENTS.md](../AGENTS.md)。游戏源码和缓存不打入发行包。
 
 可选兼容测试：
 
 ```sh
-./gradlew runClientGameTest -PfarmersDelightTestJar=/absolute/path/FarmersDelight.jar
-./gradlew runClientGameTest -PcompatTestDir=/absolute/path/compatible-mod-jars
+./gradlew :listorm:runClientGameTest -PfarmersDelightTestJar=/absolute/path/FarmersDelight.jar
+./gradlew :listorm:runClientGameTest -PcompatTestDir=/absolute/path/compatible-mod-jars
 ```
 
 兼容目录须包含材料模组及其自身依赖。测试在临时新世界执行，不使用既有玩家存档。

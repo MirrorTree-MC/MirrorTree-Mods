@@ -10,4 +10,4 @@
 
 梦境快照保存在当前世界的 mirrortree/dreams/<UUID>.json，包含位置、生命、饥饿、饱和度、消耗度和效果。旧 config/mirrortree/dream_data.json 的坐标记录可读，迁移不会删除旧文件。
 
-编译：将 LIStorm 源码置于相邻 ../LIStorm，先构建 alpha.4 的 JAR，再用 Java 25 执行 ./gradlew build。StarrySkies 4.2.0+26.1 由 Modrinth Maven 获取。
+编译：从统一仓库根目录用 Java 25 执行 `./gradlew :journey:build`，Gradle 会一并构建所需 LIStorm 项目。StarrySkies 4.2.0+26.1 由 Modrinth Maven 获取。完整分发见根目录 [README](../README.md)。

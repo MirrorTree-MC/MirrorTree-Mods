@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
   "id": "mirrortree",
-  "version": "6.1.0+26.1.2",
+  "version": "${version}",
   "name": "MirrorTree",
   "description": "MirrorTree shared content, bedroom protection and server dream travel.",
   "authors": [
     "BaicaiBear"
   ],
   "contact": {
-    "sources": "https://github.com/BaicaiBear/MirrorTree-Journey"
+    "sources": "https://github.com/MirrorTree-MC/MirrorTree-Mods/tree/master/journey"
   },
   "license": "CC0-1.0",
   "icon": "assets/mirrortree/icon.png",

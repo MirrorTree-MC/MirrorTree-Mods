@@ -1,5 +1,8 @@
-# Repository workflow
+# LIStorm maintenance
 
-- This project is LIStorm: `https://github.com/BaicaiBear/LIStorm`.
-- The user requests that completed changes be committed and pushed to this repository after verification. This authorization also applies to subsequent work in this repository.
-- Review the diff and run relevant checks before committing. Keep build outputs, caches, and test worlds ignored. Do not commit unrelated user changes or force-push over remote work.
+- Follow the root [AGENTS.md](../AGENTS.md). Current source home is https://github.com/MirrorTree-MC/MirrorTree-Mods/tree/master/listorm.
+- Preserve the `lantern-in-storm` mod ID and the inherited AnnoyingEffects/Spirit in Storm registration and save IDs.
+- Bedroom safety belongs here: `mirrortree:bedroom` has no environmental nightmares or protective-item durability consumption.
+- Lamp placement still obeys building permissions. Keep Starry Skies activation/protection rules separate from placement permission.
+- Keep common and client source sets separated. Journey consumes the public LIStorm API through a Gradle project dependency.
+- From the repository root, use `./gradlew :listorm:build`; run `:listorm:runClientGameTest` or compatibility GameTests only when the affected behavior requires them.

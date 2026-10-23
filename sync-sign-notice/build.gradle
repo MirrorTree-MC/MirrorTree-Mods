@@ -1,17 +1,17 @@
-plugins { id 'net.fabricmc.fabric-loom' version '1.18.4' }
 group = 'top.bearcabbage'
-repositories { mavenCentral(); maven { url = 'https://maven.puffish.net' }; maven { url = 'https://maven.nucleoid.xyz/releases' } }
-dependencies {
-    minecraft 'com.mojang:minecraft:26.1.2'
-    implementation 'net.fabricmc:fabric-loader:0.19.5'
-    implementation 'net.fabricmc.fabric-api:fabric-api:0.155.3+26.1.2'
-    include implementation('com.mysql:mysql-connector-j:8.2.0')
-}
-java { withSourcesJar(); sourceCompatibility = JavaVersion.VERSION_25; targetCompatibility = JavaVersion.VERSION_25 }
-tasks.withType(JavaCompile).configureEach { options.release = 25; options.encoding = 'UTF-8' }
-jar { from('LICENSE') }
-
 version = '1.1.0+26.1.2'
 base { archivesName = 'sync-sign-notice' }
 
-fabricApi { configureTests { createSourceSet = true; modId = 'notice-test'; enableGameTests = false; enableClientGameTests = true } }
+dependencies {
+    include implementation('com.mysql:mysql-connector-j:8.2.0')
+}
+jar { from('LICENSE') }
+
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = 'notice-test'
+        enableGameTests = false
+        enableClientGameTests = true
+    }
+}

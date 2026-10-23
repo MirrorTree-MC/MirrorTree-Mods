@@ -1,11 +1,6 @@
-plugins {
-    id 'net.fabricmc.fabric-loom' version "${loom_version}"
-}
-
-repositories {
-    maven { url = 'https://maven.nucleoid.xyz/releases' }
-    maven { url = 'https://maven.puffish.net' }
-}
+group = 'top.bearcabbage.lanterninstorm'
+version = '6.0.0-alpha.4+26.1.2'
+base { archivesName = 'lantern-in-storm-rebirth' }
 
 loom {
     splitEnvironmentSourceSets()
@@ -18,31 +13,13 @@ loom {
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
-    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-    implementation 'eu.pb4:trinkets:4.0.1+26.1'
+    // Trinkets injects public Minecraft interfaces needed by dependent projects.
+    api 'eu.pb4:trinkets:4.0.1+26.1'
     implementation 'net.puffish:skillsmod:0.19.1+26.1:fabric'
 }
 
-processResources {
-    inputs.property 'version', project.version
-    filesMatching('fabric.mod.json') {
-        expand 'version': project.version
-    }
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.release = 25
-}
-
-java {
-    withSourcesJar()
-    sourceCompatibility = JavaVersion.VERSION_25
-    targetCompatibility = JavaVersion.VERSION_25
-}
-
 jar {
+    from('LICENSE')
     from('licenses') { into 'licenses' }
 }
 

@@ -1,8 +1,8 @@
-# Maintenance
+# Sync Sign Notice maintenance
 
-- Target Minecraft 26.1.2, Java 25, client-only Fabric entrypoint and client mixin.
+- Follow the root [AGENTS.md](../AGENTS.md). This module has only a client Fabric entrypoint and client mixin; exclude it from the server distribution.
 - Publish complete immutable notice lists; rendering must read one snapshot. Serialize refresh requests and never read JDBC on the render thread.
 - Empty database results clear current notices and cache. Preserve original sign data and back text.
-- Do not commit config credentials, notice contents, run directories or build outputs.
-- ./gradlew build packages the JDBC driver. ./gradlew runClientGameTest checks the actual client mixin, marker fallback, concurrent rendering/publication, empty database handling, fresh/expired cache, and JDBC class loading.
-- The 2026-10-23 client test passed all nine checks. It does not itself prove connectivity to the production MySQL server.
+- Do not commit database credentials, notice contents, runtime config, run directories or build outputs.
+- From the repository root, `./gradlew :sync-sign-notice:build` packages the JDBC driver. `:sync-sign-notice:runClientGameTest` checks the actual client mixin, marker fallback, concurrent rendering/publication, empty database handling, fresh/expired cache, and JDBC class loading.
+- Client tests do not establish connectivity to the production MySQL server.

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "sync-sign-notice",
-  "version": "1.1.0+26.1.2",
+  "version": "${version}",
   "name": "Sync Sign Notice",
   "description": "To sync your sign in Minecraft with a remote mysql database",
   "authors": [
@@ -9,9 +9,9 @@
   ],
   "contact": {
     "homepage": "https://github.com/BaicaiBear",
-    "sources": "https://github.com/BaicaiBear/sync-sign-notice"
+    "sources": "https://github.com/MirrorTree-MC/MirrorTree-Mods/tree/master/sync-sign-notice"
   },
-  "license": "CC0-1.0",
+  "license": "MIT",
   "icon": "assets/sync-sign-notice/icon.png",
   "environment": "client",
   "entrypoints": {

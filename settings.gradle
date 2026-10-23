@@ -6,4 +6,5 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'lantern-in-storm-rebirth'
+rootProject.name = 'MirrorTree-Mods'
+include 'listorm', 'journey', 'sync-sign-notice'

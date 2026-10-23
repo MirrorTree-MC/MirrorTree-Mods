@@ -1,0 +1,17 @@
+.gradle/
+.gradle-home/
+build/
+run/
+run-*/
+libs/
+.idea/
+.vscode/
+*.iml
+*.log
+.DS_Store
+/config/
+/world/
+/worlds/
+/output/
+.env
+.env.*

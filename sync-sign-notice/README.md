@@ -4,7 +4,8 @@ Fabric 客户端模组（Java 25）。仅安装到客户端，不需要服务端
 
 保留原 MySQL jellynews 查询、config/sync-sign-notice/config.json 和 24 小时离线缓存格式。数据库连接配置不包含在源码或 JAR 中。
 
-编译：./gradlew build
-客户端验证：./gradlew runClientGameTest
+从统一仓库根目录编译：`./gradlew :sync-sign-notice:build`。
+客户端验证：`./gradlew :sync-sign-notice:runClientGameTest`。
+完整客户端分发包见根目录 [README](../README.md)。
 
 维护规则见 [AGENTS.md](AGENTS.md)。
