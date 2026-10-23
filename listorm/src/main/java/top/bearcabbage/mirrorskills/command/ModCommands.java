@@ -5,13 +5,22 @@ import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-
+import java.util.List;
+import java.util.Set;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentTarget;
 import net.minecraft.commands.CommandBuildContext;
-import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.commands.Commands;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.Permissions;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import top.bearcabbage.mirrorskills.MirrorSkills;
 import top.bearcabbage.mirrorskills.data.SkillData;
@@ -21,29 +30,29 @@ public class ModCommands {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext registryAccess, Commands.CommandSelection environment) {
         // /mirrorskills command
         dispatcher.register(Commands.literal("mirrorskills")
-                .requires(source -> source.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER)) // Operator level 2
-                
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) // Operator level 2
+
                 // Grant
                 .then(Commands.literal("grant")
                         .then(Commands.argument("player", EntityArgument.player())
                                 .then(Commands.argument("skill", StringArgumentType.string())
-                                        .suggests((c, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(java.util.List.of(
+                                        .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of(
                                                 SkillData.SKILL_INVISIBILITY, SkillData.SKILL_DASHING, SkillData.SKILL_HEALING, SkillData.SKILL_DEATH_FLASHBACK,
                                                 SkillData.SKILL_PERIODIC_ABSORPTION, SkillData.SKILL_BOW_FAST_CHARGE, SkillData.SKILL_BOW_DYNAMIC_CRIT,
                                                 SkillData.SKILL_CRIT_MULTIPLIER, SkillData.SKILL_TIPPED_ARROW, SkillData.SKILL_INVINCIBLE), b))
-                                        .executes(ModCommands::grantSkill)))) // 4 parens
-                
+                                        .executes(ModCommands::grantSkill))))
+
                 // Revoke
                 .then(Commands.literal("revoke")
                         .then(Commands.argument("player", EntityArgument.player())
                                 .then(Commands.argument("skill", StringArgumentType.string())
-                                        .suggests((c, b) -> net.minecraft.commands.SharedSuggestionProvider.suggest(java.util.List.of(
-                                                SkillData.SKILL_INVISIBILITY, SkillData.SKILL_DASHING, SkillData.SKILL_HEALING, 
+                                        .suggests((c, b) -> SharedSuggestionProvider.suggest(List.of(
+                                                SkillData.SKILL_INVISIBILITY, SkillData.SKILL_DASHING, SkillData.SKILL_HEALING,
                                                 SkillData.SKILL_DEATH_FLASHBACK, SkillData.SKILL_POTION_TIME, SkillData.SKILL_POTION_LEVEL,
                                                 SkillData.SKILL_PERIODIC_ABSORPTION, SkillData.SKILL_BOW_FAST_CHARGE, SkillData.SKILL_BOW_DYNAMIC_CRIT,
                                                 SkillData.SKILL_CRIT_MULTIPLIER, SkillData.SKILL_TIPPED_ARROW, SkillData.SKILL_INVINCIBLE), b))
-                                        .executes(ModCommands::revokeSkill)))) // 4 parens
-                
+                                        .executes(ModCommands::revokeSkill))))
+
                 // Param
                 .then(Commands.literal("param")
                         .then(Commands.argument("player", EntityArgument.player())
@@ -51,11 +60,11 @@ public class ModCommands {
                                 .then(Commands.literal(SkillData.SKILL_POTION_TIME)
                                         .then(Commands.argument("beneficial_add", FloatArgumentType.floatArg())
                                                 .then(Commands.argument("harmful_add", FloatArgumentType.floatArg())
-                                                        .executes(ModCommands::updatePotionTime)))) // 4 parens
+                                                        .executes(ModCommands::updatePotionTime))))
                                 // Potion Level
                                 .then(Commands.literal(SkillData.SKILL_POTION_LEVEL)
                                         .then(Commands.argument("level_add", FloatArgumentType.floatArg())
-                                                .executes(ModCommands::updatePotionLevel))) // 3 parens
+                                                .executes(ModCommands::updatePotionLevel)))
                                 // Crit Multiplier
                                 .then(Commands.literal("crit_multiplier")
                                         .then(Commands.argument("multiplier", FloatArgumentType.floatArg(0.0f))
@@ -63,7 +72,7 @@ public class ModCommands {
                                 // Invincible Cooldown
                                 .then(Commands.literal("invincible_cd")
                                         .then(Commands.argument("cooldown", FloatArgumentType.floatArg(0.0f))
-                                                .executes(ModCommands::updateInvincibleCd)))))); // 6 parens
+                                                .executes(ModCommands::updateInvincibleCd))))));
 
         // /death command
         dispatcher.register(Commands.literal("death")
@@ -74,56 +83,56 @@ public class ModCommands {
         ServerPlayer player = EntityArgument.getPlayer(context, "player");
         float beneficial = FloatArgumentType.getFloat(context, "beneficial_add");
         float harmful = FloatArgumentType.getFloat(context, "harmful_add");
-        
-        SkillData data = ((net.fabricmc.fabric.api.attachment.v1.AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
+
+        SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
         data.setSkillEnabled(SkillData.SKILL_POTION_TIME, true);
         data.addParameter("beneficial_increase", beneficial);
         data.addParameter("harmful_reduction", harmful);
-        
-        context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.potion_time.updated", 
+
+        context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.potion_time.updated",
                 player.getName().getString(), beneficial, data.getParameter("beneficial_increase"), harmful, data.getParameter("harmful_reduction")), true);
-        ((net.fabricmc.fabric.api.attachment.v1.AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
+        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
         return 1;
     }
 
     private static int updatePotionLevel(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = EntityArgument.getPlayer(context, "player");
         float level = FloatArgumentType.getFloat(context, "level_add");
-        
-        SkillData data = ((net.fabricmc.fabric.api.attachment.v1.AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
+
+        SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
         data.setSkillEnabled(SkillData.SKILL_POTION_LEVEL, true);
         data.addParameter("level_adjustment", level);
-        
-        context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.potion_level.updated", 
+
+        context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.potion_level.updated",
                 player.getName().getString(), level, data.getParameter("level_adjustment")), true);
-        ((net.fabricmc.fabric.api.attachment.v1.AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
+        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
         return 1;
     }
 
     private static int updateCritMultiplier(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = EntityArgument.getPlayer(context, "player");
         float multiplier = FloatArgumentType.getFloat(context, "multiplier");
-        
-        SkillData data = ((net.fabricmc.fabric.api.attachment.v1.AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
+
+        SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
         data.setSkillEnabled(SkillData.SKILL_CRIT_MULTIPLIER, true);
         data.setParameter("crit_multiplier", multiplier);
-        
-        context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.crit_multiplier.updated", 
+
+        context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.crit_multiplier.updated",
                 player.getName().getString(), multiplier, data.getParameter("crit_multiplier")), true);
-        ((net.fabricmc.fabric.api.attachment.v1.AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
+        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
         return 1;
     }
 
     private static int updateInvincibleCd(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = EntityArgument.getPlayer(context, "player");
         float cooldown = FloatArgumentType.getFloat(context, "cooldown");
-        
-        SkillData data = ((net.fabricmc.fabric.api.attachment.v1.AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
+
+        SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
         data.setParameter("invincible_cd", cooldown);
-        
-        context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.invincible_cd.updated", 
+
+        context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.invincible_cd.updated",
                 player.getName().getString(), cooldown), true);
-        ((net.fabricmc.fabric.api.attachment.v1.AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
+        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
         return 1;
     }
 
@@ -131,14 +140,14 @@ public class ModCommands {
         ServerPlayer player = EntityArgument.getPlayer(context, "player");
         String skill = StringArgumentType.getString(context, "skill");
 
-        SkillData data = ((net.fabricmc.fabric.api.attachment.v1.AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
+        SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
         data.setSkillEnabled(skill, true);
         // Special handling for Periodic Absorption to trigger immediately
         if (SkillData.SKILL_PERIODIC_ABSORPTION.equals(skill)) {
              data.setParameter("periodic_timer", 12000.0f);
         }
 
-        ((net.fabricmc.fabric.api.attachment.v1.AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
+        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
         context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.grant.success", skill, player.getName().getString()), true);
         return 1;
     }
@@ -147,9 +156,9 @@ public class ModCommands {
         ServerPlayer player = EntityArgument.getPlayer(context, "player");
         String skill = StringArgumentType.getString(context, "skill");
 
-        SkillData data = ((net.fabricmc.fabric.api.attachment.v1.AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
+        SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
         data.setSkillEnabled(skill, false);
-        
+
         // Reset params if it's a potion skill
         if (SkillData.SKILL_POTION_TIME.equals(skill)) {
             data.setParameter("beneficial_increase", 0f);
@@ -167,13 +176,13 @@ public class ModCommands {
         } else {
             context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.revoke.success", skill, player.getName().getString()), true);
         }
-        ((net.fabricmc.fabric.api.attachment.v1.AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
+        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
         return 1;
     }
 
     private static int triggerDeathFlashback(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        SkillData data = ((net.fabricmc.fabric.api.attachment.v1.AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
+        SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
 
         if (!data.isSkillEnabled(SkillData.SKILL_DEATH_FLASHBACK)) {
             context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.death.no_skill"), false);
@@ -182,27 +191,27 @@ public class ModCommands {
 
         if (data.hasDeathLocation()) {
             Vec3 loc = data.getLastDeathLocation();
-            
+
             // Handle Dimension
             String dimStr = data.getLastDeathDimension();
-            net.minecraft.server.level.ServerLevel targetWorld = (net.minecraft.server.level.ServerLevel) player.level(); // Default to current
-            
+            ServerLevel targetWorld = player.level(); // Default to current
+
             if (dimStr != null) {
-                net.minecraft.resources.Identifier dimId = net.minecraft.resources.Identifier.tryParse(dimStr);
+                Identifier dimId = Identifier.tryParse(dimStr);
                 if (dimId != null) {
-                    net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> worldKey = net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, dimId);
-                    net.minecraft.server.level.ServerLevel foundWorld = context.getSource().getServer().getLevel(worldKey);
+                    ResourceKey<Level> worldKey = ResourceKey.create(Registries.DIMENSION, dimId);
+                    ServerLevel foundWorld = context.getSource().getServer().getLevel(worldKey);
                     if (foundWorld != null) {
                         targetWorld = foundWorld;
                     }
                 }
             }
-            
+
             // Use teleport method that supports dimension change
-            player.teleportTo(targetWorld, loc.x, loc.y, loc.z, java.util.Set.of(), player.getYRot(), player.getXRot(), true);
-            
+            player.teleportTo(targetWorld, loc.x, loc.y, loc.z, Set.of(), player.getYRot(), player.getXRot(), true);
+
             data.clearDeathLocation(); // Can only be used once per death
-            ((net.fabricmc.fabric.api.attachment.v1.AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy()); // Sync
+            ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
             context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.death.success"), false);
             return 1;
         } else {

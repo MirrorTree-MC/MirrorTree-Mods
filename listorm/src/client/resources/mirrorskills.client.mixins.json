@@ -4,8 +4,8 @@
   "compatibilityLevel": "JAVA_25",
   "mixins": [
     "MinecraftClientMixin",
-    "client.AbstractClientPlayerEntityMixin",
-    "client.BowUseDurationMixin"
+    "AbstractClientPlayerEntityMixin",
+    "BowUseDurationMixin"
   ],
   "injectors": {
     "defaultRequire": 1

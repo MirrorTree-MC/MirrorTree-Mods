@@ -59,3 +59,5 @@
 - `python tools/verify_distribution.py`：客户端 ZIP 的 3 个正式模组、服务端 ZIP 的 2 个正式模组、入口、mixin、许可证、依赖均通过。额外检查确认正式 JAR 中无本次已删除类，Journey 客户端 mixin 仍存在，空入口已移除。
 - `git diff --check`：通过。独立代码复核确认 Trinkets 普通／cosmetic 槽次序、网络归一化与固定形状／纹理值保持一致。
 - 隔离客户端日志仍出现基线已有的测试账号认证、默认示例数据库连接及各向异性过滤提示；测试断言均完成。这些测试与构建耗时不用于推断性能收益。
+
+MirrorSkills 合入后的后续审查见 [技能代码审查](SKILLS_CODE_REVIEW.md)。

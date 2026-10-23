@@ -30,10 +30,6 @@ public class SkillData {
     
     private String lastDeathDimension = null; // Stores identifier string e.g. "minecraft:overworld"
     private Vec3 lastDeathLocation = null;
-    private boolean hasDeathLocation = false;
-
-    // Default Constructor
-    public SkillData() {}
 
     public boolean isSkillEnabled(String skillId) {
         return enabledSkills.getOrDefault(skillId, false);
@@ -72,19 +68,17 @@ public class SkillData {
     }
 
     public boolean hasDeathLocation() {
-        return hasDeathLocation;
+        return lastDeathLocation != null;
     }
 
     public void setLastDeathLocation(Vec3 location, String dimension) {
         this.lastDeathLocation = location;
         this.lastDeathDimension = dimension;
-        this.hasDeathLocation = location != null;
     }
 
     public void clearDeathLocation() {
         this.lastDeathLocation = null;
         this.lastDeathDimension = null;
-        this.hasDeathLocation = false;
     }
 
     // Serialization
@@ -105,7 +99,7 @@ public class SkillData {
         nbt.put("Parameters", paramsTag);
 
         // Death Location
-        if (hasDeathLocation && lastDeathLocation != null) {
+        if (lastDeathLocation != null) {
             CompoundTag deathTag = new CompoundTag();
             deathTag.putDouble("x", lastDeathLocation.x);
             deathTag.putDouble("y", lastDeathLocation.y);
@@ -153,7 +147,6 @@ public class SkillData {
             if (deathTag.contains("dim")) {
                 data.lastDeathDimension = deathTag.getStringOr("dim", "");
             }
-            data.hasDeathLocation = true;
         }
 
         return data;
@@ -166,7 +159,6 @@ public class SkillData {
         newData.parameters.putAll(this.parameters);
         newData.lastDeathLocation = this.lastDeathLocation;
         newData.lastDeathDimension = this.lastDeathDimension;
-        newData.hasDeathLocation = this.hasDeathLocation;
         return newData;
     }
 

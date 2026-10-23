@@ -17,7 +17,7 @@ public abstract class MinecraftClientMixin {
     @Shadow public HitResult hitResult;
     @Shadow public net.minecraft.client.player.LocalPlayer player;
 
-    @Inject(method = "startAttack", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;swing(Lnet/minecraft/world/InteractionHand;)V"), cancellable = true)
+    @Inject(method = "startAttack", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;swing(Lnet/minecraft/world/InteractionHand;)V"))
     private void onDoAttack(CallbackInfoReturnable<Boolean> cir) {
         if (this.hitResult != null && this.hitResult.getType() == HitResult.Type.MISS) {
             if (this.player != null) {

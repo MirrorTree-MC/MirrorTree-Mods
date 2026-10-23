@@ -1,4 +1,4 @@
-package top.bearcabbage.mirrorskills.mixin.client;
+package top.bearcabbage.mirrorskills.mixin;
 
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.item.ItemStack;

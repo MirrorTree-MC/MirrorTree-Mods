@@ -31,3 +31,5 @@ LIStorm 声明提供 `mirrorskills` 兼容别名。运行时必须移走独立 M
 `:listorm:runClientGameTest` 包含实际按键 → 服务端技能 → 同步 HUD 数据测试，关闭并重新打开临时世界后检查技能节点、冷却与跨维度死亡位置。`python tools/verify_distribution.py` 核验发行包只包含正式模组、技能类/Mixin/许可及源技能树字节校验。Journey validation JAR 仅编译，不安装正式服。
 
 2026-10-23 本地验证通过：根目录 `build :journey:validationJar`（3 项服务端 GameTests、SkillData codec/副本隔离回归）、`:listorm:runClientGameTest`（含按键/同步/冷却及临时世界重开）和两端发行包校验。旧技能实现除两个初始化入口外保持一致；11 份技能树 JSON 与 Serenia 来源校验值一致。此记录不代替正式服重启与真人连接验收。
+
+后续源码清理及新增验证见 [MirrorSkills 代码审查](SKILLS_CODE_REVIEW.md)；上面的源码一致性说明描述整合提交时的状态。

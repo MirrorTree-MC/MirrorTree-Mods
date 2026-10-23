@@ -2,6 +2,7 @@ package top.bearcabbage.lanterninstorm.test;
 
 import net.fabricmc.fabric.api.attachment.v1.AttachmentTarget;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.Identifier;
@@ -49,6 +50,33 @@ public class SkillsServerGameTest {
           "LIStorm food and biome experience reaches embedded support tree once");
 
       var data = target.getAttachedOrCreate(MirrorSkills.SKILL_DATA).copy();
+      data.setSkillEnabled(SkillData.SKILL_HEALING, true);
+      data.setSkillEnabled(SkillData.SKILL_PERIODIC_ABSORPTION, true);
+      data.setParameter("periodic_timer", 11999);
+      data.setParameter("invincible_ticks", 2);
+      target.setAttached(MirrorSkills.SKILL_DATA, data);
+      player.setHealth(6);
+      long currentTime = player.level().getGameTime();
+      ServerTickEvents.END_LEVEL_TICK.invoker().onEndTick(player.level());
+      data = target.getAttachedOrCreate(MirrorSkills.SKILL_DATA);
+      helper.assertTrue(player.getHealth() == 16
+              && data.getCooldown(SkillData.SKILL_HEALING) == currentTime,
+          "combined skill tick heals and retains the healing cooldown");
+      var absorption = player.getEffect(MobEffects.ABSORPTION);
+      helper.assertTrue(data.getParameter("periodic_timer") == 0
+              && absorption != null && absorption.isInfiniteDuration(),
+          "combined skill tick resets expired periodic timer and grants absorption");
+      helper.assertTrue(data.getParameter("invincible_ticks") == 1,
+          "combined skill tick also retains the invincibility countdown");
+      ServerTickEvents.END_LEVEL_TICK.invoker().onEndTick(player.level());
+      data = target.getAttachedOrCreate(MirrorSkills.SKILL_DATA);
+      helper.assertTrue(player.getHealth() == 16
+              && data.getCooldown(SkillData.SKILL_HEALING) == currentTime
+              && data.getParameter("periodic_timer") == 1
+              && data.getParameter("invincible_ticks") == 0,
+          "next skill tick advances periodic timer and ends invincibility without losing cooldown");
+
+      data = data.copy();
       data.setSkillEnabled(SkillData.SKILL_POTION_TIME, true);
       data.setSkillEnabled(SkillData.SKILL_POTION_LEVEL, true);
       data.setParameter("beneficial_increase", .5f);
