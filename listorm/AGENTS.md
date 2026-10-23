@@ -1,6 +1,6 @@
 # LIStorm maintenance
 
-- Follow the root [AGENTS.md](../AGENTS.md). Current source home is https://github.com/MirrorTree-MC/MirrorTree-Mods/tree/master/listorm.
+- Follow the root [AGENTS.md](../AGENTS.md). Current source home is https://github.com/MirrorTree-MC/MirrorTree-Mods/tree/main/listorm.
 - Preserve the `lantern-in-storm` mod ID and the inherited AnnoyingEffects/Spirit in Storm registration and save IDs.
 - Bedroom safety belongs here: `mirrortree:bedroom` has no environmental nightmares or protective-item durability consumption.
 - Lamp placement still obeys building permissions. Keep Starry Skies activation/protection rules separate from placement permission.

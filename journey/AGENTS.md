@@ -1,6 +1,6 @@
 # Journey maintenance
 
-- Follow the root [AGENTS.md](../AGENTS.md). Keep client content and server dream travel in this module on the shared master branch.
+- Follow the root [AGENTS.md](../AGENTS.md). Keep client content and server dream travel in this module on the shared main branch.
 - Preserve existing item, decorator, mixin and save identifiers. Never reset production player data as part of an upgrade.
 - Bedroom restrictions apply to ordinary players; creative administrators may build. LIStorm owns nightmare safety and lamp behavior.
 - All world reads, teleportation and player changes run on the server thread. First-dream search is bounded; load a candidate chunk before querying its height.

@@ -1,6 +1,6 @@
 # 三模组仓库迁移
 
-本次将现有修复后的源码合入 `MirrorTree-MC/MirrorTree-Mods`，统一维护 `master` 分支。模块仍分别生成 JAR；仓库名不会变成新的游戏注册命名空间。
+本次将现有修复后的源码合入 `MirrorTree-MC/MirrorTree-Mods`，统一维护 `main` 分支。模块仍分别生成 JAR；仓库名不会变成新的游戏注册命名空间。
 
 ## 源码来源
 
@@ -28,11 +28,11 @@ Journey 导入提交已经合并原 master 与 server 历史，原 server 提交
 
 ## 构建与分发
 
-根目录管理唯一 wrapper、共用工具链和 CI。Journey 通过 Gradle 项目依赖编译 LIStorm API，构建不再要求相邻的旧 LIStorm 仓库。各模块保持独立版本；发行包名称标识 Minecraft 目标版本，发布标签标识整批构建。
+根目录管理唯一 wrapper 和共用工具链，构建与校验在本地执行。Journey 通过 Gradle 项目依赖编译 LIStorm API，构建不再要求相邻的旧 LIStorm 仓库。各模块保持独立版本；发行包名称标识 Minecraft 目标版本，发布标签标识整批构建。
 
 客户端包包含三个正式模组，服务端包只包含 LIStorm 与 Journey。第三方模组、正式服配置、公告数据、技能树数据包、世界和玩家存档均不随包分发。MySQL Connector/J 仍由公告模组按原有方式内嵌。
 
-`build` 构建模块及发行包并执行已接入的自动检查；`assembleDistribution` 可单独打包。`tools/verify_distribution.py` 检查分发内容并生成 `build/distributions/SHA256SUMS`。CI 上传两个 ZIP 和该校验文件，`v*` 标签触发 GitHub Release。
+`build` 构建模块及发行包并执行已接入的自动检查；`assembleDistribution` 可单独打包。`tools/verify_distribution.py` 检查分发内容并生成 `build/distributions/SHA256SUMS`。GitHub Actions 工作流已移除；安装包和校验文件由本地生成，发布标签不触发自动发布。
 
 ## 验证范围
 
