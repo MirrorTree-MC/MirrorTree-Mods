@@ -5,3 +5,7 @@ gradlew text eol=lf
 *.jar binary
 *.png binary
 *.ogg binary
+
+# Preserve the imported datapack bytes used by the source SHA-256 manifest.
+listorm/src/main/resources/data/mirrortree/puffish_skills/** -text
+listorm/licenses/MirrorTree-Skill-Tree-LICENSE -text
