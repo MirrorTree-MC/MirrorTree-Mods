@@ -34,8 +34,10 @@ final class DreamStore {
             s.exhaustion = ((top.bearcabbage.mirrortree.mixin.FoodDataAccessor)player.getFoodData()).mirrortree$getExhaustion();
             s.hasVitals = true;
             var ops = player.registryAccess().createSerializationContext(JsonOps.INSTANCE);
+            // Encoding on the server thread creates a detached snapshot of the complete hidden chain.
+            // Vanilla's copy constructor copies only the active layer.
             for (var effect : player.getActiveEffects())
-                s.effects.add(MobEffectInstance.CODEC.encodeStart(ops, new MobEffectInstance(effect)).getOrThrow());
+                s.effects.add(MobEffectInstance.CODEC.encodeStart(ops, effect).getOrThrow());
             return s;
         }
 

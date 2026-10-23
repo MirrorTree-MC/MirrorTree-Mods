@@ -20,7 +20,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.Permissions;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import top.bearcabbage.mirrorskills.MirrorSkills;
 import top.bearcabbage.mirrorskills.data.SkillData;
@@ -192,26 +191,30 @@ public class ModCommands {
         if (data.hasDeathLocation()) {
             Vec3 loc = data.getLastDeathLocation();
 
-            // Handle Dimension
             String dimStr = data.getLastDeathDimension();
-            ServerLevel targetWorld = player.level(); // Default to current
-
+            // Legacy records without a dimension retain their current-world behavior.
+            ServerLevel targetWorld = player.level();
             if (dimStr != null) {
                 Identifier dimId = Identifier.tryParse(dimStr);
-                if (dimId != null) {
-                    ResourceKey<Level> worldKey = ResourceKey.create(Registries.DIMENSION, dimId);
-                    ServerLevel foundWorld = context.getSource().getServer().getLevel(worldKey);
-                    if (foundWorld != null) {
-                        targetWorld = foundWorld;
-                    }
+                targetWorld = dimId == null || dimStr.isEmpty() ? null : context.getSource().getServer()
+                        .getLevel(ResourceKey.create(Registries.DIMENSION, dimId));
+                if (targetWorld == null) {
+                    context.getSource().sendFailure(Component.translatable("command.mirrorskills.death.dimension_unavailable"));
+                    return 0;
                 }
             }
+            if (!Double.isFinite(loc.x) || !Double.isFinite(loc.y) || !Double.isFinite(loc.z)) {
+                context.getSource().sendFailure(Component.translatable("command.mirrorskills.death.invalid_location"));
+                return 0;
+            }
+            if (!player.teleportTo(targetWorld, loc.x, loc.y, loc.z, Set.of(), player.getYRot(), player.getXRot(), true)) {
+                context.getSource().sendFailure(Component.translatable("command.mirrorskills.death.failed"));
+                return 0;
+            }
 
-            // Use teleport method that supports dimension change
-            player.teleportTo(targetWorld, loc.x, loc.y, loc.z, Set.of(), player.getYRot(), player.getXRot(), true);
-
-            data.clearDeathLocation(); // Can only be used once per death
-            ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
+            SkillData updated = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA).copy();
+            updated.clearDeathLocation(); // Consume only after a successful teleport.
+            ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, updated);
             context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.death.success"), false);
             return 1;
         } else {

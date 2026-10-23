@@ -22,7 +22,7 @@ public abstract class LivingEntityMixin {
             // Skill 5: Potion Time Multiplier
             if (data.isSkillEnabled(SkillData.SKILL_POTION_TIME)) {
                 StatusEffectInstanceExtensions ext = (StatusEffectInstanceExtensions) effect;
-                if (!ext.mirrorskills$isDurationModified()) {
+                if (!ext.mirrorskills$isDurationModified() && !effect.isInfiniteDuration()) {
                     float harmfulReduction = data.getParameter("harmful_reduction");
                     float beneficialIncrease = data.getParameter("beneficial_increase");
                     
@@ -43,7 +43,8 @@ public abstract class LivingEntityMixin {
                              effect.getAmplifier(),
                              effect.isAmbient(),
                              effect.isVisible(),
-                             effect.showIcon()
+                             effect.showIcon(),
+                             ext.mirrorskills$getHiddenEffect()
                          );
                          
                          StatusEffectInstanceExtensions newExt = (StatusEffectInstanceExtensions) newEffect;
@@ -81,7 +82,8 @@ public abstract class LivingEntityMixin {
                                  newAmp,
                                  effect.isAmbient(),
                                  effect.isVisible(),
-                                 effect.showIcon()
+                                 effect.showIcon(),
+                                 ext.mirrorskills$getHiddenEffect()
                              );
                              
                              StatusEffectInstanceExtensions newExt = (StatusEffectInstanceExtensions) newEffect;
