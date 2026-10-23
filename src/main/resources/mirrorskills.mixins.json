@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "package": "top.bearcabbage.mirrorskills.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "LivingEntityMixin",
+    "PlayerEntityMixin",
+    "BowItemMixin",
+    "ProjectileEntityMixin",
+    "StatusEffectInstanceMixin",
+    "ArrowDamageAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}
