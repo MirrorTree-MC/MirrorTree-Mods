@@ -1,106 +1,60 @@
 package top.bearcabbage.mirrortree;
 
-import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
-
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.event.player.*;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.block.*;
-import net.minecraft.component.type.FoodComponent;
-import net.minecraft.entity.passive.VillagerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.*;
-import net.minecraft.world.World;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import top.bearcabbage.mirrortree.starryskies.TopTrapdoorDecorator;
 
-import java.util.*;
-import java.util.concurrent.*;
-
 public class MirrorTree implements ModInitializer {
-	public static final String MOD_ID = "mirrortree";
-	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-	public static final MTConfig config = new MTConfig(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("config.json"));
-	public static final MTConfig dream = new MTConfig(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("dream_data.json"));
-	public static RegistryKey<World> bedroom = RegistryKey.of(RegistryKeys.WORLD, Identifier.of(MOD_ID, "bedroom"));
-	public static int bedroomX;
-	public static int bedroomY;
-	public static int bedroomZ;
-	public static int bedroomX_init;
-	public static int bedroomY_init;
-	public static int bedroomZ_init;
-
-	public static final Map<ServerPlayerEntity, Integer> fresh_player = new ConcurrentHashMap<>();
-	public static final Item FOX_TAIL_ITEM = Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "fox_tail_item"), new Item(new Item.Settings().maxCount(64)));
-
-	private static final Set<String> dungeonsLootTables = Set.of("dungeons_arise", "dungeons_arise_seven_seas");
-	private static final Set<String> structureLootTables = Set.of("betteroceanmonuments", "betterwitchhuts");
-
-	// 活动物品
-	public static final Item MEAT_ZONGZI = Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "meat_zongzi"), new Item(new Item.Settings().food((new FoodComponent.Builder()).nutrition(10).saturationModifier(0.3F).build())));
-	public static final Item EGG_ZONGZI = Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "egg_zongzi"), new Item(new Item.Settings().food((new FoodComponent.Builder()).nutrition(10).saturationModifier(0.3F).build())));
-	public static final Item BERRY_ZONGZI = Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "berry_zongzi"), new Item(new Item.Settings().food((new FoodComponent.Builder()).nutrition(10).saturationModifier(0.3F).build())));
-
-	// 奖券
-	public static final Item TICKET_1 = Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "ticket_1"), new Item(new Item.Settings().maxCount(64)));
-	public static final Item TICKET_2 = Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "ticket_2"), new Item(new Item.Settings().maxCount(64)));
-	public static final Item TICKET_3 = Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "ticket_3"), new Item(new Item.Settings().maxCount(64)));
-	public static final Item TICKET_4 = Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "ticket_4"), new Item(new Item.Settings().maxCount(64)));
-	public static final Item TICKET_5 = Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "ticket_5"), new Item(new Item.Settings().maxCount(64)));
-
-	@Override
-	public void onInitialize() {
-
-
-		bedroomX = config.getInt("bedroomX", 0);
-		bedroomY = config.getInt("bedroomY", 80);
-		bedroomZ = config.getInt("bedroomZ", 0);
-		bedroomX_init = config.getInt("bedroomX_init", 0);
-		bedroomY_init = config.getInt("bedroomY_init", 100);
-		bedroomZ_init = config.getInt("bedroomZ_init", 0);
-
-		TopTrapdoorDecorator.init();
-
-		UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
-			if (world.getRegistryKey().getValue().equals(Identifier.of(MOD_ID,"bedroom"))) {
-				if (world.getBlockState(hitResult.getBlockPos()).getBlock() instanceof BedBlock) {
-					if (world.isClient) return ActionResult.SUCCESS;
-				}
-			}
-            return ActionResult.PASS;
-        });
-
-		UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
-			if (world.getRegistryKey().getValue().equals(Identifier.of(MOD_ID,"bedroom"))) {
-				if (entity instanceof VillagerEntity) return ActionResult.PASS;
-				if (!player.isCreative()) return ActionResult.FAIL;
-			}
-			return ActionResult.PASS;
-		});
-
-		AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
-			if (world.getRegistryKey().getValue().equals(Identifier.of(MOD_ID,"bedroom"))) {
-				if (!player.isCreative()) return ActionResult.FAIL;
-			}
-			return ActionResult.PASS;
-		});
-
-		AttackBlockCallback.EVENT.register((player, world, hand, pos, direction) -> {
-			if (world.getRegistryKey().equals(bedroom)) {
-				if (!player.isCreative()) return ActionResult.FAIL;
-			}
-			// 防止球球维度地牢球壳被破坏
-			if (world.getRegistryKey().getValue().getNamespace().equals("starry_skies") && world.getBlockState(pos).getBlock().equals(Blocks.REINFORCED_DEEPSLATE) && !player.isCreative()) return ActionResult.FAIL;
-			return ActionResult.PASS;
-		});
-
-		if(FabricLoader.getInstance().getEnvironmentType().equals(EnvType.CLIENT)) ClientLifecycleEvents.CLIENT_STARTED.register(MTClient::onStarted);
-	}
+ public static final String MOD_ID="mirrortree";
+ public static final org.slf4j.Logger LOGGER=org.slf4j.LoggerFactory.getLogger(MOD_ID);
+ public static final ResourceKey<Level> bedroom=ResourceKey.create(Registries.DIMENSION,Identifier.fromNamespaceAndPath(MOD_ID,"bedroom"));
+ public static final MTConfig config=new MTConfig(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("config.json"));
+ public static final MTConfig dream=new MTConfig(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("dream_data.json"));
+ public static final Item FOX_TAIL_ITEM=item("fox_tail_item",false);
+ public static final Item MEAT_ZONGZI=item("meat_zongzi",true);
+ public static final Item EGG_ZONGZI=item("egg_zongzi",true);
+ public static final Item BERRY_ZONGZI=item("berry_zongzi",true);
+ public static final Item TICKET_1=item("ticket_1",false),TICKET_2=item("ticket_2",false),TICKET_3=item("ticket_3",false),TICKET_4=item("ticket_4",false),TICKET_5=item("ticket_5",false);
+ private static Item item(String name,boolean food){
+  var id=Identifier.fromNamespaceAndPath(MOD_ID,name);
+  var properties=new Item.Properties().setId(ResourceKey.create(Registries.ITEM,id));
+  if(food)properties.food(new FoodProperties.Builder().nutrition(10).saturationModifier(0.3f).build());
+  return Registry.register(BuiltInRegistries.ITEM,id,new Item(properties));
+ }
+ public void onInitialize(){
+  TopTrapdoorDecorator.init();
+  top.bearcabbage.mirrortree.dream.MTDream.init();
+  UseBlockCallback.EVENT.register((player,world,hand,hit)->{
+   if (!world.dimension().equals(bedroom)) return InteractionResult.PASS;
+   var block=world.getBlockState(hit.getBlockPos()).getBlock();
+   if(block instanceof net.minecraft.world.level.block.BedBlock){
+    if(player instanceof net.minecraft.server.level.ServerPlayer serverPlayer && hand==net.minecraft.world.InteractionHand.MAIN_HAND)
+     top.bearcabbage.mirrortree.dream.MTDream.enter(serverPlayer,hit.getBlockPos());
+    return InteractionResult.SUCCESS;
+   }
+   if(!player.isCreative() && !(block instanceof net.minecraft.world.level.block.DoorBlock
+     || block instanceof net.minecraft.world.level.block.GrassBlock
+     || block instanceof net.minecraft.world.level.block.LecternBlock
+     || block instanceof net.minecraft.world.level.block.StairBlock)) return InteractionResult.FAIL;
+   return InteractionResult.PASS;
+  });
+  UseEntityCallback.EVENT.register((player,world,hand,entity,hit)->world.dimension().equals(bedroom)&&!player.isCreative()&&!(entity instanceof Villager)?InteractionResult.FAIL:InteractionResult.PASS);
+  AttackEntityCallback.EVENT.register((player,world,hand,entity,hit)->world.dimension().equals(bedroom)&&!player.isCreative()?InteractionResult.FAIL:InteractionResult.PASS);
+  AttackBlockCallback.EVENT.register((player,world,hand,pos,direction)->{
+   if(!player.isCreative()&&(world.dimension().equals(bedroom)||(world.dimension().identifier().getNamespace().equals("starry_skies")&&world.getBlockState(pos).is(Blocks.REINFORCED_DEEPSLATE))))return InteractionResult.FAIL;
+   return InteractionResult.PASS;
+  });
+ }
 }

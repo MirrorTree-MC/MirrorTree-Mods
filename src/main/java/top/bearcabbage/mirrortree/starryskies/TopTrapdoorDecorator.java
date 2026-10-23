@@ -6,16 +6,16 @@ import de.dafuqs.starryskies.registries.StarryRegistries;
 import de.dafuqs.starryskies.worldgen.*;
 import de.dafuqs.starryskies.worldgen.decorators.XMarksTheSpotDecorator;
 import de.dafuqs.starryskies.worldgen.decorators.XMarksTheSpotDecoratorConfig;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.BlockState;
-import net.minecraft.registry.Registry;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.StructureWorldAccess;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.Registry;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.resources.Identifier;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.WorldGenLevel;
 
-import static net.minecraft.block.Blocks.*;
+import static net.minecraft.world.level.block.Blocks.*;
 import static top.bearcabbage.mirrortree.MirrorTree.MOD_ID;
 
 public class TopTrapdoorDecorator extends SphereDecorator<SphereDecoratorConfig.DefaultSphereDecoratorConfig> {
@@ -23,12 +23,12 @@ public class TopTrapdoorDecorator extends SphereDecorator<SphereDecoratorConfig.
     public static SphereDecorator<SphereDecoratorConfig.DefaultSphereDecoratorConfig> TOPTRAPDOOR = register("toptrapdoor", new TopTrapdoorDecorator(SphereDecoratorConfig.DefaultSphereDecoratorConfig.CODEC));
 
 
-    private static final BlockState GLASS = TINTED_GLASS.getDefaultState();
+    private static final BlockState GLASS = TINTED_GLASS.defaultBlockState();
 
     public static void init() {}
 
     private static <C extends SphereDecoratorConfig, F extends SphereDecorator<C>> F register(String name, F feature) {
-        return Registry.register(StarryRegistries.SPHERE_DECORATOR, Identifier.of(MOD_ID, name), feature);
+        return Registry.register(StarryRegistries.SPHERE_DECORATOR, Identifier.fromNamespaceAndPath(MOD_ID, name), feature);
     }
 
     public TopTrapdoorDecorator(Codec<SphereDecoratorConfig.DefaultSphereDecoratorConfig> codec) {
@@ -37,8 +37,8 @@ public class TopTrapdoorDecorator extends SphereDecorator<SphereDecoratorConfig.
 
     @Override
     public boolean generate(SphereFeatureContext<SphereDecoratorConfig.DefaultSphereDecoratorConfig> context) {
-        StructureWorldAccess world = context.getWorld();
-        PlacedSphere<?> sphere = context.getSphere();
+        WorldGenLevel world = context.world();
+        PlacedSphere<?> sphere = context.sphere();
 
         BlockPos center = sphere.getPosition();
         int radius = sphere.getRadius() + 2;
@@ -46,11 +46,11 @@ public class TopTrapdoorDecorator extends SphereDecorator<SphereDecoratorConfig.
         // -------------------------------
         // 顶部中央表面玻璃块
         // -------------------------------
-        BlockPos topCenter = center.up(radius);
+        BlockPos topCenter = center.above(radius);
         while (world.getBlockState(topCenter).isAir() && topCenter.getY() > center.getY()) {
-            topCenter = topCenter.down();
+            topCenter = topCenter.below();
         }
-        world.setBlockState(topCenter, GLASS, 3);
+        world.setBlock(topCenter, GLASS, 3);
 
         // -------------------------------
         // 三正交方向圆环逻辑（Copper Bulb/Copper Grate）
@@ -60,8 +60,8 @@ public class TopTrapdoorDecorator extends SphereDecorator<SphereDecoratorConfig.
         float outerRadius = innerRadius + ringWidth;
         double verticalThickness = radius/4.0; // 半径>4时垂直方向加宽
 
-        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
-        Random random = context.getRandom();
+        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+        RandomSource random = context.random();
 
         int minX = center.getX() - (int)Math.ceil(outerRadius);
         int maxX = center.getX() + (int)Math.ceil(outerRadius);
@@ -82,25 +82,25 @@ public class TopTrapdoorDecorator extends SphereDecorator<SphereDecoratorConfig.
                     // XY平面圆环
                     double distXY = Math.sqrt(dx*dx + dy*dy);
                     if (distXY >= innerRadius && distXY <= outerRadius && Math.abs(dz) < verticalThickness) {
-                        world.setBlockState(mutablePos, random.nextFloat() > 0.6F ?
-                                OXIDIZED_COPPER_BULB.getDefaultState().cycle(Properties.LIT) :
-                                EXPOSED_COPPER_GRATE.getDefaultState(), 3);
+                        world.setBlock(mutablePos, random.nextFloat() > 0.6F ?
+                                OXIDIZED_COPPER_BULB.defaultBlockState().cycle(BlockStateProperties.LIT) :
+                                EXPOSED_COPPER_GRATE.defaultBlockState(), 3);
                     }
 
                     // XZ平面圆环
                     double distXZ = Math.sqrt(dx*dx + dz*dz);
                     if (distXZ >= innerRadius && distXZ <= outerRadius && Math.abs(dy) < verticalThickness) {
-                        world.setBlockState(mutablePos, random.nextFloat() > 0.6F ?
-                                OXIDIZED_COPPER_BULB.getDefaultState().cycle(Properties.LIT) :
-                                EXPOSED_COPPER_GRATE.getDefaultState(), 3);
+                        world.setBlock(mutablePos, random.nextFloat() > 0.6F ?
+                                OXIDIZED_COPPER_BULB.defaultBlockState().cycle(BlockStateProperties.LIT) :
+                                EXPOSED_COPPER_GRATE.defaultBlockState(), 3);
                     }
 
                     // YZ平面圆环
                     double distYZ = Math.sqrt(dy*dy + dz*dz);
                     if (distYZ >= innerRadius && distYZ <= outerRadius && Math.abs(dx) < verticalThickness) {
-                        world.setBlockState(mutablePos, random.nextFloat() > 0.6F ?
-                                OXIDIZED_COPPER_BULB.getDefaultState().cycle(Properties.LIT) :
-                                EXPOSED_COPPER_GRATE.getDefaultState(), 3);
+                        world.setBlock(mutablePos, random.nextFloat() > 0.6F ?
+                                OXIDIZED_COPPER_BULB.defaultBlockState().cycle(BlockStateProperties.LIT) :
+                                EXPOSED_COPPER_GRATE.defaultBlockState(), 3);
                     }
                 }
             }

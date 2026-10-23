@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "bedroom-regression",
+  "version": "1.0",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "top.bearcabbage.mirrortree.validation.RegressionProbe"
+    ]
+  },
+  "depends": {
+    "mirrortree": "*"
+  }
+}

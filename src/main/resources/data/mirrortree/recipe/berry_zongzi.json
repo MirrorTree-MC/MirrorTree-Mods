@@ -2,15 +2,9 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "#": {
-      "item": "minecraft:lily_pad"
-    },
-    "*": {
-      "item": "farmersdelight:cooked_rice"
-    },
-    "-": {
-      "item": "minecraft:sweet_berries"
-    }
+    "#": "minecraft:lily_pad",
+    "*": "farmersdelight:cooked_rice",
+    "-": "minecraft:sweet_berries"
   },
   "pattern": [
     "#-#",

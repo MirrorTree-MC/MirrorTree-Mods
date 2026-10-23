@@ -1,9 +1,11 @@
 {
   "required": true,
   "package": "top.bearcabbage.mirrortree.mixin",
-  "compatibilityLevel": "JAVA_21",
+  "compatibilityLevel": "JAVA_25",
   "mixins": [
-    "PlayerEntityMixin"
+    "PlayerEntityMixin",
+    "ServerPlayerEntityMixin",
+    "FoodDataAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
