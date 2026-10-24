@@ -1,6 +1,8 @@
 package top.bearcabbage.lanterninstorm.mixin;
 
 import java.util.ArrayDeque;
+import net.minecraft.core.Holder;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.*;
@@ -21,6 +23,7 @@ public abstract class LivingEntityMixin implements StatusEffectInstanceStackHold
   }
 
   @Unique private final ArrayDeque<MobEffectInstance> storm$pending = new ArrayDeque<>();
+  @Unique private final ArrayDeque<Holder<MobEffect>> storm$removals = new ArrayDeque<>();
 
   @Override
   public void pushStatusEffect(MobEffectInstance effect) {
@@ -32,10 +35,17 @@ public abstract class LivingEntityMixin implements StatusEffectInstanceStackHold
     return storm$pending.pollFirst();
   }
 
+  @Override
+  public void queueStatusEffectRemoval(Holder<MobEffect> effect) {
+    storm$removals.addLast(effect);
+  }
+
   @Inject(method = "tick", at = @At("TAIL"))
   private void storm$drain(CallbackInfo ci) {
     LivingEntity self = (LivingEntity) (Object) this;
-    if (!self.level().isClientSide())
+    if (!self.level().isClientSide()) {
+      while (!storm$removals.isEmpty()) self.removeEffect(storm$removals.removeFirst());
       while (!storm$pending.isEmpty()) self.addEffect(storm$pending.removeFirst());
+    }
   }
 }

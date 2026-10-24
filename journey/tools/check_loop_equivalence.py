@@ -12,7 +12,7 @@ def original_candidates():
         for y in range(4):
             for x in range(-radius, radius + 1):
                 for z in range(-radius, radius + 1):
-                    for dy in ((0,) if y == 0 else (y, -y)):
+                    for dy in (0,) if y == 0 else (y, -y):
                         yield x, dy, z
 
 
@@ -49,7 +49,8 @@ def placements(radius, squared):
                 ):
                     inside = (
                         inner * inner <= distance_squared <= outer * outer
-                        if squared else inner <= math.sqrt(distance_squared) <= outer
+                        if squared
+                        else inner <= math.sqrt(distance_squared) <= outer
                     )
                     if inside and abs(height) < thickness:
                         yield x, y, z, plane
@@ -80,7 +81,9 @@ def main():
         after = list(placements(radius, squared=True))
         assert before == after, ("placement/RNG order changed", radius)
         events += len(after)
-    print(f"Rings: identical XYZ/plane placement and RNG event order for radii 2..24 ({events} events).")
+    print(
+        f"Rings: identical XYZ/plane placement and RNG event order for radii 2..24 ({events} events)."
+    )
 
 
 if __name__ == "__main__":

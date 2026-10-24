@@ -24,8 +24,9 @@ public class SkillHandler {
             if (data.isSkillEnabled(SkillData.SKILL_CRIT_MULTIPLIER)) {
                 float currentMult = data.getParameter("crit_multiplier");
                 if (currentMult > 2.0f) {
+                    data = data.copy();
                     data.setParameter("crit_multiplier", 2.0f);
-                    ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
+                    ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
                     MirrorSkills.LOGGER.info("Capped critical hit multiplier for {} to 2.0", player.getName().getString());
                 }
             }
@@ -36,8 +37,9 @@ public class SkillHandler {
                 SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
                 if (data.isSkillEnabled(SkillData.SKILL_DEATH_FLASHBACK)) {
                     String dim = player.level().dimension().identifier().toString();
+                    data = data.copy();
                     data.setLastDeathLocation(player.position(), dim);
-                    ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
+                    ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
                 }
             }
         });
@@ -47,12 +49,16 @@ public class SkillHandler {
             for (ServerPlayer player : world.players()) {
                 AttachmentTarget target = (AttachmentTarget) player;
                 SkillData skillData = target.getAttachedOrCreate(MirrorSkills.SKILL_DATA);
+                if (!skillData.isSkillEnabled(SkillData.SKILL_HEALING)
+                        && !skillData.isSkillEnabled(SkillData.SKILL_PERIODIC_ABSORPTION)
+                        && !(skillData.getParameter("invincible_ticks") > 0)) continue;
+                skillData = skillData.copy();
                 boolean changed = tickHealing(player, skillData, currentTime);
                 changed |= tickPeriodicAbsorption(player, skillData);
                 changed |= tickInvincible(skillData);
                 if (changed) {
                     // A new instance marks the attachment dirty and publishes the final tick state.
-                    target.setAttached(MirrorSkills.SKILL_DATA, skillData.copy());
+                    target.setAttached(MirrorSkills.SKILL_DATA, skillData);
                 }
             }
         });

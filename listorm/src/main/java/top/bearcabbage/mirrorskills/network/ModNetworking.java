@@ -63,8 +63,9 @@ public final class ModNetworking {
                 0.05 // speed
             );
 
+            data = data.copy();
             data.setCooldown(skillId, currentTime);
-            ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
+            ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
             player.sendSystemMessage(Component.translatable("message.mirrorskills.invisibility_activated"), true);
         } else if (skillId.equals(SkillData.SKILL_DASHING)) {
             if (lastTime != 0 && currentTime - lastTime < 20) return;
@@ -74,8 +75,9 @@ public final class ModNetworking {
             player.hurtMarked = true; // Mark velocity as modified
             player.connection.send(new ClientboundSetEntityMotionPacket(player));
 
+            data = data.copy();
             data.setCooldown(skillId, currentTime);
-            ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
+            ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
         } else if (SkillData.SKILL_INVINCIBLE.equals(skillId)) {
             float cooldownSeconds = data.getParameter("invincible_cd");
             if (cooldownSeconds <= 0) cooldownSeconds = 120.0f;
@@ -86,10 +88,11 @@ public final class ModNetworking {
                 return;
             }
 
+            data = data.copy();
             data.setParameter("invincible_ticks", 100.0f);
 
             data.setCooldown(SkillData.SKILL_INVINCIBLE, currentTime);
-            ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
+            ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
             player.sendSystemMessage(Component.translatable("message.mirrorskills.invincible_activated"), true);
         } else if (SkillData.SKILL_TIPPED_ARROW.equals(skillId)) {
             if (lastTime != 0 && currentTime - lastTime < 6000) {
@@ -99,8 +102,9 @@ public final class ModNetworking {
             }
 
             giveRandomTippedArrows(player);
+            data = data.copy();
             data.setCooldown(SkillData.SKILL_TIPPED_ARROW, currentTime);
-            ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
+            ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
             player.sendSystemMessage(Component.translatable("message.mirrorskills.tipped_arrow_activated"), true);
         }
     }

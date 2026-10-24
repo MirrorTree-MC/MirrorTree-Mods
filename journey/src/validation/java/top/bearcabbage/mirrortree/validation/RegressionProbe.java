@@ -138,6 +138,8 @@ public final class RegressionProbe implements ModInitializer {
         player.setHealth(12);player.getFoodData().setFoodLevel(7);player.getFoodData().setSaturation(2);
         ((FoodDataAccessor)player.getFoodData()).mirrortree$setExhaustion(1.25f);
         player.addEffect(new MobEffectInstance(MobEffects.SPEED,600));
+        player.addEffect(new MobEffectInstance(MobEffects.ABSORPTION,600));
+        player.setAbsorptionAmount(1);
         platform(bedroom,new BlockPos(4239,66,799));
         player.startSleeping(dreamBed);
         check(MTDream.wakeup(player) && player.level()==bedroom && player.gameMode()==GameType.ADVENTURE,
@@ -152,6 +154,7 @@ public final class RegressionProbe implements ModInitializer {
                 "bed callback restores prior dream and survival mode");
         check(player.hasEffect(MobEffects.SPEED) && player.getEffect(MobEffects.SPEED).getDuration()==600,
                 "effect snapshot survives removal and disk reload");
+        check(player.getAbsorptionAmount()==1, "remaining absorption survives wakeup and disk reload");
         check(player.getHealth()==12 && player.getFoodData().getFoodLevel()==7
                 && player.getFoodData().getSaturationLevel()==2
                 && ((FoodDataAccessor)player.getFoodData()).mirrortree$getExhaustion()==1.25f,
@@ -162,15 +165,55 @@ public final class RegressionProbe implements ModInitializer {
         var blockHit=new BlockHitResult(Vec3.atCenterOf(bed.below()),Direction.UP,bed.below(),false);
         check(UseBlockCallback.EVENT.invoker().interact(player,bedroom,InteractionHand.MAIN_HAND,blockHit)==InteractionResult.FAIL,
                 "ordinary bedroom building permission remains restricted");
-        check(player.drop(new ItemStack(Items.DIRT),false,true)==null, "server rejects item drops in bedroom");
+        checkBedroomDrops(bedroom);
         // Prior return marked the disk snapshot inactive: this starts a fresh bounded search.
         bedroom.setBlockAndUpdate(bed,Blocks.RED_BED.defaultBlockState());
         bedroom.setBlockAndUpdate(bed.north(),Blocks.RED_BED.defaultBlockState()
                 .setValue(BedBlock.PART,net.minecraft.world.level.block.state.properties.BedPart.HEAD));
+        SearchRegressionChecks.run(server, player, bed, this::check);
         var firstResult=UseBlockCallback.EVENT.invoker().interact(player,bedroom,InteractionHand.MAIN_HAND,bedHit);
         check(firstResult.consumesAction(), "first-dream bed callback consumed interaction");
         var field=MTDream.class.getDeclaredField("SEARCHES");field.setAccessible(true);
-        check(((Map<?,?>)field.get(null)).containsKey(player.getUUID()), "first-dream search queued");
+        check(((Map<?,?>)field.get(null)).containsKey(player.getUUID()) || player.level()==overworld,
+                "first-dream search queued or completed immediately");
+    }
+    private void checkBedroomDrops(ServerLevel bedroom) {
+        var nearby = AABB.ofSize(player.position(), 32, 32, 32);
+        int before = bedroom.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, nearby).size();
+        player.inventoryMenu.setCarried(new ItemStack(Items.DIAMOND, 7));
+        for (int button : new int[] {0, 1}) {
+            player.inventoryMenu.clicked(-999, button, net.minecraft.world.inventory.ContainerInput.PICKUP, player);
+            check(player.inventoryMenu.getCarried().getCount()==7, "outside click preserves carried stack: " + button);
+        }
+        player.inventoryMenu.setCarried(ItemStack.EMPTY);
+        player.getInventory().setItem(0, new ItemStack(Items.DIAMOND, 5));
+        player.getInventory().setSelectedSlot(0);
+        for (int button : new int[] {0, 1}) {
+            player.inventoryMenu.clicked(36, button, net.minecraft.world.inventory.ContainerInput.THROW, player);
+            check(player.getInventory().countItem(Items.DIAMOND)==5, "inventory throw preserves stack: " + button);
+        }
+        player.drop(false); player.drop(true);
+        check(player.getInventory().countItem(Items.DIAMOND)==5, "server hotkey drop preserves selected stack");
+        check(bedroom.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, nearby).size()==before,
+                "blocked drops do not create duplicate items");
+        player.inventoryMenu.setCarried(new ItemStack(Items.EMERALD, 2));
+        player.inventoryMenu.clicked(9, 0, net.minecraft.world.inventory.ContainerInput.PICKUP, player);
+        check(player.inventoryMenu.getCarried().isEmpty() && player.getInventory().countItem(Items.EMERALD)==2,
+                "ordinary inventory movement remains available");
+        player.getInventory().clearContent();
+        for (int slot=0;slot<36;slot++) player.getInventory().setItem(slot, new ItemStack(Items.STONE, 64));
+        player.inventoryMenu.setCarried(new ItemStack(Items.DIAMOND, 7));
+        player.inventoryMenu.removed(player);
+        check(player.inventoryMenu.getCarried().isEmpty()
+                && bedroom.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, nearby).stream()
+                        .filter(item -> item.getItem().is(Items.DIAMOND)).mapToInt(item -> item.getItem().getCount()).sum()==7,
+                "closing a full inventory preserves overflow items");
+        player.getInventory().clearContent();
+        player.setGameMode(GameType.CREATIVE);
+        player.inventoryMenu.setCarried(new ItemStack(Items.EMERALD, 3));
+        player.inventoryMenu.clicked(-999, 0, net.minecraft.world.inventory.ContainerInput.PICKUP, player);
+        check(player.inventoryMenu.getCarried().isEmpty(), "creative administrators can still drop items");
+        player.setGameMode(GameType.ADVENTURE);
     }
     private void tickSafety(){ PlayerStore.get(player).tick=19;SafetyService.tick(player); }
     private static void platform(ServerLevel level,BlockPos pos){

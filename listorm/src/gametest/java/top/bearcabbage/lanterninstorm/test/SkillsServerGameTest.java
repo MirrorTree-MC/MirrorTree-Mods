@@ -32,14 +32,23 @@ public class SkillsServerGameTest {
       helper.assertTrue(player.getAttributeValue(Attributes.MAX_HEALTH) == baseHealth,
           "locking removes attribute reward");
       var invincible = combat.getSkill("invincible").orElseThrow();
-      invincible.unlock(player);
       var target = (AttachmentTarget) player;
+      var beforeGrant = target.getAttachedOrCreate(MirrorSkills.SKILL_DATA);
+      invincible.unlock(player);
+      helper.assertTrue(!beforeGrant.isSkillEnabled(SkillData.SKILL_INVINCIBLE),
+          "grant leaves an earlier queued snapshot unchanged");
       helper.assertTrue(target.getAttachedOrCreate(MirrorSkills.SKILL_DATA)
           .isSkillEnabled(SkillData.SKILL_INVINCIBLE), "legacy grant command reward runs");
+      var beforeParameter = target.getAttachedOrCreate(MirrorSkills.SKILL_DATA);
       combat.getSkill("invincible_cd_reduction").orElseThrow().unlock(player);
+      helper.assertTrue(beforeParameter.getParameter("invincible_cd") == 0,
+          "parameter update leaves an earlier queued snapshot unchanged");
       helper.assertTrue(target.getAttachedOrCreate(MirrorSkills.SKILL_DATA)
           .getParameter("invincible_cd") == 90, "legacy parameter command reward runs");
+      var beforeRevoke = target.getAttachedOrCreate(MirrorSkills.SKILL_DATA);
       invincible.lock(player);
+      helper.assertTrue(beforeRevoke.isSkillEnabled(SkillData.SKILL_INVINCIBLE),
+          "revoke leaves an earlier queued snapshot unchanged");
       helper.assertTrue(!target.getAttachedOrCreate(MirrorSkills.SKILL_DATA)
           .isSkillEnabled(SkillData.SKILL_INVINCIBLE), "legacy revoke command reward runs");
       var experience = support.getExperience().orElseThrow();

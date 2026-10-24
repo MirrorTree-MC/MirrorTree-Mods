@@ -5,12 +5,15 @@
   "mixins": [
     "PlayerEntityMixin",
     "ServerPlayerEntityMixin",
-    "FoodDataAccessor"
+    "AbstractContainerMenuMixin",
+    "FoodDataAccessor",
+    "ChunkMapAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
   },
   "client": [
-    "ClientPlayerEntityMixin"
+    "ClientPlayerEntityMixin",
+    "MinecraftMixin"
   ]
 }

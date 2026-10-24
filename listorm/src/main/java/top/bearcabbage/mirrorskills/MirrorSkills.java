@@ -4,7 +4,6 @@ import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentSyncPredicate;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +20,7 @@ public final class MirrorSkills {
             .persistent(SkillData.CODEC)
             .initializer(SkillData::new)
             .copyOnDeath()
-            .syncWith(ByteBufCodecs.fromCodec(SkillData.CODEC).cast(), AttachmentSyncPredicate.all())
+            .syncWith(SkillData.STREAM_CODEC.cast(), AttachmentSyncPredicate.all())
             .buildAndRegister(Identifier.fromNamespaceAndPath(MOD_ID, "skill_data"));
 
     public static void initialize() {

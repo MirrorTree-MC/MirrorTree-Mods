@@ -1,12 +1,17 @@
 # Maintenance
 
-- Repository: https://github.com/MirrorTree-MC/MirrorTree-Mods. Maintain one `main` branch; the three modules keep their independent mod IDs and versions.
-- Target Minecraft 26.1.2, Fabric Loader 0.19.5+, Java 25 and the root Gradle 9.7.1 wrapper. Build from the repository root; module-specific rules are in each module's AGENTS.md.
-- Keep Journey's LIStorm dependency inside this Gradle build. Do not restore sibling-checkout paths, committed dependency JARs or separate module wrappers.
-- Preserve registry/resource IDs, network IDs, configuration locations and world/player save formats. Repository consolidation must not reset player progress or change gameplay.
-- Run `./gradlew build :journey:validationJar` and `python3 tools/verify_distribution.py` for build/distribution changes. Run additional targeted tests only for changed behavior; distinguish compilation, GameTests, client tests and real-server evidence.
-- `./gradlew assembleDistribution` creates separate client/server ZIPs. Select production JAR task outputs explicitly. Never distribute sources JARs, GameTest mods or the Journey validation probe.
-- `:journey:validationJar` only compiles a destructive isolated-server probe. It changes blocks/player data and stops its test server; never install or run it in production.
-- Review the diff before committing and pushing. Preserve unrelated work and available source histories; do not force-push. Keep credentials, runtime configs, worlds, caches and build outputs out of Git.
-- Build and verify locally. This repository does not use GitHub Actions; release tags do not trigger automated publishing.
-- Back up replaced runtime JARs before any separately requested deployment. Restart is required to load new JARs. Do not change production player data or stop production during source-only maintenance.
+Repository: https://github.com/MirrorTree-MC/MirrorTree-Mods. Keep one root Git repository on `main`, one Gradle wrapper, and independently versioned modules. Journey consumes LIStorm through a project dependency; never restore sibling-checkout paths or committed dependency JARs.
+
+- Target Minecraft 26.1.2, Fabric Loader 0.19.5+, Java 25 and the checked-in Gradle 9.7.1 wrapper. Run Gradle from this root.
+- Preserve mod/resource/network IDs, config locations and world/player formats. Source maintenance does not authorize deployment, world changes or production restarts. Preserve unrelated work and available source history; do not force-push.
+- Use targeted checks for changed behavior. Distinguish compile, GameTest, client, isolated-server and production evidence; static complexity analysis does not establish measured performance gains.
+- Build and publish locally; do not add GitHub Actions. Keep credentials, runtime configs, worlds, caches and build outputs out of Git. Development logs belong in the relevant build unit's `build/logs/`, never root/module-root `*.log`; retain Minecraft's own runtime log locations.
+- README files describe user behavior; `docs/` retains installation, provenance and required verification inputs. Put development rules in the applicable AGENTS.md; do not accumulate migration plans, audit transcripts or test-run diaries.
+
+Read only the relevant maintenance entry:
+
+- [LIStorm](listorm/AGENTS.md): lamps, safety, effects, progression and skills.
+- [Journey](journey/AGENTS.md): bedroom/dream travel and the isolated validation probe.
+- [Sync Sign Notice](sync-sign-notice/AGENTS.md): client notices and JDBC/cache behavior.
+- [Distribution tools](tools/AGENTS.md): shared build, packaging, updater and release verification.
+- [Documentation](docs/AGENTS.md): user documentation and preserved source manifests.

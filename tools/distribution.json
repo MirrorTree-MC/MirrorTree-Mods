@@ -1,0 +1,39 @@
+{
+  "project": "MirrorTree-Mods",
+  "minecraft": "26.1.2",
+  "modules": [
+    {
+      "directory": "listorm",
+      "id": "lantern-in-storm",
+      "sides": [
+        "client",
+        "server"
+      ],
+      "notices": [
+        "LICENSE",
+        "licenses"
+      ]
+    },
+    {
+      "directory": "journey",
+      "id": "mirrortree",
+      "sides": [
+        "client",
+        "server"
+      ],
+      "notices": [
+        "LICENSE"
+      ]
+    },
+    {
+      "directory": "sync-sign-notice",
+      "id": "sync-sign-notice",
+      "sides": [
+        "client"
+      ],
+      "notices": [
+        "LICENSE"
+      ]
+    }
+  ]
+}

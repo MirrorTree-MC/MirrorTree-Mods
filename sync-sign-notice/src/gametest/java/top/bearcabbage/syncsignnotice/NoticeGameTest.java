@@ -2,6 +2,7 @@ package top.bearcabbage.syncsignnotice;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -45,6 +46,19 @@ public final class NoticeGameTest implements FabricClientGameTest {
             try {writer.join();}catch(InterruptedException e){throw new RuntimeException(e);}
             check(true,"concurrent publication and rendering have no partial list or index errors");
             try {
+                Path damaged = Path.of("notice-damaged-cache.json").toAbsolutePath();
+                for (String json : List.of("", "{\"lastUpdate\":123,\"newsItems\":[", "[]", "null")) {
+                    Files.writeString(damaged, json);
+                    var recovered = new SConfig(damaged, true);
+                    check(recovered.get("lastUpdate", Long.class)==null, "invalid cache is discarded: " + json.length());
+                    recovered.set("lastUpdate", 123L); recovered.save();
+                    check(new SConfig(damaged).get("lastUpdate", Long.class)==123L, "recovered cache can be saved and reopened");
+                }
+                Files.writeString(damaged, "{");
+                boolean rejected = false;
+                try { new SConfig(damaged); } catch (com.google.gson.JsonParseException | IllegalStateException expected) { rejected = true; }
+                check(rejected && Files.readString(damaged).equals("{"), "invalid user configuration is preserved");
+                Files.delete(damaged);
                 var cache=new SConfig(Path.of("notice-regression-cache.json").toAbsolutePath());
                 var item=new NewsItem();item.type="测试";item.name="作者";item.content="离线缓存测试";
                 int[] query = new int[2];

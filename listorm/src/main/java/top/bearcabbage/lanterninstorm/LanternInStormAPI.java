@@ -23,20 +23,24 @@ public final class LanternInStormAPI {
   }
 
   public static void setRTPSpawn(ServerPlayer player, BlockPos pos, boolean warp) {
+    setRTPSpawn(player, player.level(), pos, warp);
+  }
+
+  public static void setRTPSpawn(ServerPlayer player, ServerLevel level, BlockPos pos, boolean warp) {
     var state = PlayerStore.get(player);
     state.spawn = new int[] {pos.getX(), pos.getY(), pos.getZ()};
-    state.spawnDimension = player.level().dimension().identifier().toString();
+    state.spawnDimension = level.dimension().identifier().toString();
     state.graceTicks = 1600;
     state.dirty = true;
     PlayerStore.save(player);
     if (!setRTPSpawnWhenSpawnpointCommand)
       player.setRespawnPosition(
           new ServerPlayer.RespawnConfig(
-              LevelData.RespawnData.of(player.level().dimension(), pos, 0, 0), true),
+              LevelData.RespawnData.of(level.dimension(), pos, 0, 0), true),
           false);
     if (!warp) {
       BeginningLanternEntity.create(
-          player.level(), pos, "入梦点[" + player.getName().getString() + "]", false);
+          level, pos, "入梦点[" + player.getName().getString() + "]", false);
       player.connection.send(
           new net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket(
               net.minecraft.network.chat.Component.literal("大鹏的梦").withColor(0x525288)));

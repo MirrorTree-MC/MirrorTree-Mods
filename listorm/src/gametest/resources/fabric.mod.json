@@ -10,6 +10,7 @@
     ],
     "fabric-gametest": [
       "top.bearcabbage.lanterninstorm.test.StormServerGameTest",
+      "top.bearcabbage.lanterninstorm.test.ReviewRegressionGameTest",
       "top.bearcabbage.lanterninstorm.test.SkillsServerGameTest",
       "top.bearcabbage.lanterninstorm.test.SkillsRegressionGameTest"
     ]

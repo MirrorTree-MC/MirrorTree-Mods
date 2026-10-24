@@ -21,6 +21,6 @@ public abstract class SpawnPointCommandMixin {
       Coordinates rotation,
       CallbackInfoReturnable<Integer> cir) {
     if (LanternInStormAPI.setRTPSpawnWhenSpawnpointCommand)
-      targets.forEach(p -> LanternInStormAPI.setRTPSpawn(p, pos, false));
+      targets.forEach(p -> LanternInStormAPI.setRTPSpawn(p, source.getLevel(), pos, false));
   }
 }

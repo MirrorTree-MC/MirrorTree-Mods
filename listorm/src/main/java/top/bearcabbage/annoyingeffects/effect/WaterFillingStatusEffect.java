@@ -16,6 +16,7 @@ import net.minecraft.world.level.block.SoulSandBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FlowingFluid;
 import net.minecraft.world.level.material.Fluids;
+import top.bearcabbage.annoyingeffects.StatusEffectInstanceStackHolder;
 import top.bearcabbage.annoyingeffects.utils.NoSavePlayerData;
 
 public class WaterFillingStatusEffect extends AnnoyingStatusEffect {
@@ -46,18 +47,23 @@ public class WaterFillingStatusEffect extends AnnoyingStatusEffect {
       blockFluid = Blocks.WATER;
     }
     if (!(entity.level() instanceof ServerLevel world)) return true;
-    if (entity instanceof Player player) {
-      player.removeEffect(MobEffects.CONDUIT_POWER);
+    if (entity instanceof Player player && player.hasEffect(MobEffects.CONDUIT_POWER)) {
+      ((StatusEffectInstanceStackHolder) player).queueStatusEffectRemoval(MobEffects.CONDUIT_POWER);
     }
 
     BlockPos pos = entity.blockPosition();
+    var eye = entity.getEyePosition();
+    BlockState flowing = blockFluid.defaultBlockState().setValue(LiquidBlock.LEVEL, 8);
     int range = (int) Math.floor(REACH + 0.5);
     for (int dx = -range; dx <= range; ++dx)
       for (int dy = -range; dy <= range; ++dy)
         for (int deltaZ = -range; deltaZ <= range; ++deltaZ) {
+          double eyeX = pos.getX() + dx + 0.5 - eye.x;
+          double eyeY = pos.getY() + dy + 0.5 - eye.y;
+          double eyeZ = pos.getZ() + deltaZ + 0.5 - eye.z;
+          double distanceSquared = eyeX * eyeX + eyeY * eyeY + eyeZ * eyeZ;
+          if (distanceSquared > REACH * REACH) continue;
           BlockPos p = pos.offset(dx, dy, deltaZ);
-          double distance = entity.getEyePosition().distanceTo(p.getCenter());
-          if (distance > REACH) continue;
 
           BlockState blockState = world.getBlockState(p);
           Block block = blockState.getBlock();
@@ -78,7 +84,7 @@ public class WaterFillingStatusEffect extends AnnoyingStatusEffect {
               && !(blockState.getFluidState().getType().isSame(fluid))
               && !(block instanceof SoulSandBlock)) {
             float hardness = blockState.getDestroySpeed(world, p);
-            if (hardness >= 0 && hardness <= BREAKING_FORCE * (REACH - distance)) {
+            if (hardness >= 0 && hardness <= BREAKING_FORCE * (REACH - Math.sqrt(distanceSquared))) {
               world.destroyBlock(p, true);
             }
             blockState = world.getBlockState(p);
@@ -86,7 +92,6 @@ public class WaterFillingStatusEffect extends AnnoyingStatusEffect {
           }
 
           if (block instanceof AirBlock) {
-            BlockState flowing = blockFluid.defaultBlockState().setValue(LiquidBlock.LEVEL, 8);
             world.setBlockAndUpdate(p, flowing);
           }
         }

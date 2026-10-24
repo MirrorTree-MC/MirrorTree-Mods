@@ -1,27 +1,25 @@
 MirrorTree Mods — Minecraft 26.1.2 服务端包
 
-停服后，先备份并移走同 mod ID 的旧 JAR，再将 mods/ 中的两个
-JAR 放入服务端 mods 文件夹，随后启动服务端。
-本包包含：
-- lantern-in-storm-rebirth 6.0.0-alpha.5+26.1.2
-- mirrortree 6.1.0+26.1.2
-
-运行环境与单独安装的依赖：
-- Java 25，Minecraft 26.1.2，Fabric Loader 0.19.5+
+本包包含 LIStorm、Journey 两个正式模组；Sync Sign Notice 仅装客户端。
+运行环境：Java 25、Minecraft 26.1.2、Fabric Loader 0.19.5+。
+以下依赖须单独安装：
 - Fabric API 0.155.3+26.1.2
 - Trinkets Updated 4.0.1+26.1
 - Pufferfish's Skills 0.19.2（26.1 Fabric）
-- Pufferfish's Attributes 0.8.2（26.1 Fabric）
+- Pufferfish's Attributes 0.8.2+26.1
 - Starry Skies 4.2.0+26.1
 
-LIStorm 已包含原 AnnoyingEffects、Spirit in Storm 与 MirrorSkills，
-不要同时安装这三个旧模组。Sync Sign Notice 仅安装在客户端。
-现有配置、世界与玩家数据继续保留。LIStorm 内置 Serenia 默认技能树。
-停服时将原 mirrortree-skill-tree 数据包备份移出世界 datapacks 目录，
-避免外部副本覆盖内置版本；不要删除 Pufferfish 玩家数据。
-本包不会导入卧室建筑或重置玩家；沿用实例中已有的卧室配置。
-不要向正式服安装 bedroom-regression、GameTest 或 sources JAR。
-ZIP 校验值见同批发布的 SHA256SUMS。
+LIStorm 已合入 AnnoyingEffects、Spirit in Storm、MirrorSkills，须备份并
+移走这三个独立旧模组。内置 Serenia 默认技能树；停服时将旧
+world/datapacks/mirrortree-skill-tree 备份移到 datapacks 之外，避免覆盖
+内置资源。保留其他自定义数据包和 Pufferfish 玩家进度；回滚时同时恢复
+旧 JAR 与旧技能树。LIStorm 不提供 Minecraft 1.21.1 旧存档自动转换。
 
-源码与各模块许可证：
+本包不包含世界、配置、玩家数据或数据库凭据，不导入卧室建筑。
+公告模组已内嵌 MySQL Connector/J，数据库连接配置由管理员提供。
+不要安装 sources、GameTest 或 bedroom-regression 验证 JAR 到正式实例。
+包内 manifest.json 列出版本与依赖，SHA256SUMS 校验包内文件；ZIP 本身
+的校验值见相邻 .zip.sha256 或同批 SHA256SUMS。
+
+完整安装说明、源码与许可证：
 https://github.com/MirrorTree-MC/MirrorTree-Mods

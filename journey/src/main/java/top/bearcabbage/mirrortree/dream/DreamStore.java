@@ -18,6 +18,7 @@ final class DreamStore {
         String dimension = "minecraft:overworld";
         double x, y, z;
         float yaw, pitch, health, saturation, exhaustion;
+        Float absorption;
         int food;
         boolean hasVitals;
         JsonArray effects = new JsonArray();
@@ -29,6 +30,7 @@ final class DreamStore {
             s.x = player.getX(); s.y = player.getY(); s.z = player.getZ();
             s.yaw = player.getYRot(); s.pitch = player.getXRot();
             s.health = player.getHealth();
+            s.absorption = player.getAbsorptionAmount();
             s.food = player.getFoodData().getFoodLevel();
             s.saturation = player.getFoodData().getSaturationLevel();
             s.exhaustion = ((top.bearcabbage.mirrortree.mixin.FoodDataAccessor)player.getFoodData()).mirrortree$getExhaustion();
@@ -49,6 +51,7 @@ final class DreamStore {
             for (var json : effects) decoded.add(MobEffectInstance.CODEC.parse(ops, json).getOrThrow());
             player.removeAllEffects();
             for (var effect : decoded) player.addEffect(effect);
+            if (absorption != null) player.setAbsorptionAmount(absorption);
             player.setHealth(Math.min(health, player.getMaxHealth()));
             player.getFoodData().setFoodLevel(food);
             player.getFoodData().setSaturation(saturation);

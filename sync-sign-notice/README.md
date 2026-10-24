@@ -1,11 +1,9 @@
-# Sync Sign Notice — 26.1.2
+# Sync Sign Notice · 26.1.2
 
-Fabric 客户端模组（Java 25）。仅安装到客户端，不需要服务端 JAR。右键编辑标牌，使第一行为 [Notice]、第二行为公告序号、第四行为 SyncSign；显示公告不会改写标牌存档。
+Fabric 客户端公告模组，mod ID 为 `sync-sign-notice`。仅安装客户端，MySQL Connector/J 已内嵌；依赖和发行包见[安装说明](../docs/INSTALLATION.md)。
 
-保留原 MySQL jellynews 查询、config/sync-sign-notice/config.json 和 24 小时离线缓存格式。数据库连接配置不包含在源码或 JAR 中。
+编辑标牌时，将第一行设为 `[Notice]`、第二行设为公告序号、第四行设为 `SyncSign`。显示公告不会改写标牌存档或背面文本。
 
-从统一仓库根目录编译：`./gradlew :sync-sign-notice:build`。
-客户端验证：`./gradlew :sync-sign-notice:runClientGameTest`。
-完整客户端分发包见根目录 [README](../README.md)。
+使用原 MySQL `jellynews` 查询与 `config/sync-sign-notice/config.json`，支持 24 小时离线缓存。数据库连接由实例管理员配置，源码和发行包不包含连接凭据。
 
-维护规则见 [AGENTS.md](AGENTS.md)。
+开发维护见 [AGENTS.md](AGENTS.md)，许可见 [LICENSE](LICENSE)。

@@ -1,10 +1,9 @@
 package top.bearcabbage.mirrortree.dream;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -12,6 +11,8 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
@@ -20,9 +21,11 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.server.permissions.Permissions;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Blocks;
@@ -30,11 +33,22 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.storage.LevelData;
 import top.bearcabbage.lanterninstorm.LanternInStormAPI;
 import top.bearcabbage.mirrortree.MirrorTree;
+import top.bearcabbage.mirrortree.mixin.ChunkMapAccessor;
 
 public final class MTDream {
-    private static final Map<UUID, Search> SEARCHES = new HashMap<>();
-    private static final int RANGE = 3000, MAX_ATTEMPTS = 32;
+    private static final LinkedHashMap<UUID, Search> SEARCHES = new LinkedHashMap<>();
+    private static final TicketType SEARCH_TICKET = Registry.register(BuiltInRegistries.TICKET_TYPE,
+            Identifier.fromNamespaceAndPath("mirrortree", "dream_search"),
+            new TicketType(40, TicketType.FLAG_LOADING | TicketType.FLAG_KEEP_DIMENSION_ACTIVE));
+    private static final int RANGE = 3000, MAX_ATTEMPTS = 32, MAX_POSITION_DRAWS = 128, MAX_CANDIDATES_PER_TICK = 4;
+    private static final long CHUNK_WAIT_NANOS = 30_000_000_000L;
     private record Search(BlockPos bed, int attempts) {}
+    private record PendingSearch(UUID player, Search search, int x, int z, long startedNanos, CompletableFuture<?> ready, boolean fast) {
+        ChunkPos chunk() { return new ChunkPos(x >> 4, z >> 4); }
+    }
+    private static PendingSearch pendingSearch;
+    private static int workTick = -1, candidatesThisTick;
+    private static long workThisTick;
     private static BlockPos wakePosition;
 
     public static void init() {
@@ -60,7 +74,13 @@ public final class MTDream {
         });
         ServerTickEvents.END_SERVER_TICK.register(MTDream::tick);
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> SEARCHES.remove(handler.player.getUUID()));
-        ServerLifecycleEvents.SERVER_STOPPED.register(server -> SEARCHES.clear());
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+            releaseSearch(server.overworld());
+            SEARCHES.clear();
+            workTick = -1;
+            candidatesThisTick = 0;
+            workThisTick = 0;
+        });
     }
 
     public static void enter(ServerPlayer player, BlockPos bed) {
@@ -90,6 +110,7 @@ public final class MTDream {
             } else {
                 SEARCHES.put(player.getUUID(), new Search(bed.immutable(), 0));
                 player.sendSystemMessage(Component.literal("你躺在床上，闭上了眼睛……正在寻找安全的入梦点。"));
+                drainSearch(player.level().getServer(), false);
             }
         } catch (Exception e) {
             MirrorTree.LOGGER.error("Cannot enter dream for {}", player.getUUID(), e);
@@ -132,27 +153,105 @@ public final class MTDream {
                     && !player.isCreative() && !player.isSpectator()
                     && player.gameMode() != GameType.ADVENTURE) player.setGameMode(GameType.ADVENTURE);
         }
-        if (SEARCHES.isEmpty()) return;
-        for (var entry : new ArrayList<>(SEARCHES.entrySet())) {
-            var player = server.getPlayerList().getPlayer(entry.getKey());
-            Search search = entry.getValue();
-            if (player == null || !player.isAlive() || !player.level().dimension().equals(MirrorTree.bedroom)
-                    || !(player.level().getBlockState(search.bed()).getBlock() instanceof BedBlock)
-                    || player.distanceToSqr(search.bed().getX() + .5, search.bed().getY() + .5, search.bed().getZ() + .5) > 36) {
-                SEARCHES.remove(entry.getKey());
-                continue;
+        drainSearch(server, true);
+    }
+
+    private static void drainSearch(MinecraftServer server, boolean regularTick) {
+        if (workTick != server.getTickCount()) {
+            workTick = server.getTickCount();
+            candidatesThisTick = 0;
+            workThisTick = 0;
+        }
+        while (candidatesThisTick < MAX_CANDIDATES_PER_TICK && workThisTick < 2_000_000) {
+            long start = System.nanoTime();
+            boolean advanced;
+            try { advanced = advanceSearch(server, regularTick); }
+            finally { workThisTick += System.nanoTime() - start; }
+            if (!advanced) break;
+        }
+    }
+
+    private static boolean advanceSearch(MinecraftServer server, boolean regularTick) {
+        ServerLevel world = server.overworld();
+        if (pendingSearch == null) {
+            while (!SEARCHES.isEmpty()) {
+                var first = SEARCHES.firstEntry();
+                if (validSearch(server.getPlayerList().getPlayer(first.getKey()), first.getValue())) break;
+                SEARCHES.pollFirstEntry();
             }
-            ServerLevel world = server.overworld();
-            int x, z;
-            do {
-                x = world.getRandom().nextInt(RANGE * 2 + 1) - RANGE;
-                z = world.getRandom().nextInt(RANGE * 2 + 1) - RANGE;
-            } while ((long) x*x + (long) z*z > (long) RANGE*RANGE);
-            // Level.getHeight returns minY for unloaded chunks in 26.1.2.
-            world.getChunk(x >> 4, z >> 4);
+            if (SEARCHES.isEmpty()) return false;
+            var first = SEARCHES.firstEntry();
+            BlockPos position = randomCandidate(world);
+            if (position == null) {
+                SEARCHES.remove(first.getKey());
+                server.getPlayerList().getPlayer(first.getKey()).sendSystemMessage(
+                        Component.literal("当前世界边界内未能选出入梦点，请稍后再试。"));
+                return true;
+            }
+            int x = position.getX(), z = position.getZ();
+            ChunkPos chunk = new ChunkPos(x >> 4, z >> 4);
+            // The vanilla cache uses 1 for a full chunk. Unknown/proto chunks keep the original tick path.
+            boolean fast = world.getChunkSource().getChunkNow(x >> 4, z >> 4) != null
+                    || ((ChunkMapAccessor) world.getChunkSource().chunkMap)
+                            .mirrortree$getChunkTypeCache().get(chunk.pack()) == 1;
+            // A null future reserves the candidate until its loading path may run.
+            pendingSearch = new PendingSearch(first.getKey(), first.getValue(), x, z, 0, null, fast);
+        }
+        PendingSearch pending = pendingSearch;
+        if (!pending.fast() && !regularTick) return false;
+        var player = server.getPlayerList().getPlayer(pending.player());
+        Search search = pending.search();
+        if (SEARCHES.get(pending.player()) != search || !validSearch(player, search)) {
+            // A newly queued record may equal the cancelled one by value; preserve its identity.
+            if (SEARCHES.get(pending.player()) == search) SEARCHES.remove(pending.player());
+            releaseSearch(world);
+            return pending.fast();
+        }
+        if (pending.ready() == null) {
+            try {
+                long startedNanos = System.nanoTime();
+                CompletableFuture<?> ready;
+                if (pending.fast() && world.getChunkSource().getChunkNow(pending.x() >> 4, pending.z() >> 4) != null) {
+                    world.getChunkSource().addTicketWithRadius(SEARCH_TICKET, pending.chunk(), 0);
+                    ready = CompletableFuture.completedFuture(null);
+                } else {
+                    // Schedule without managedBlock; cold/unknown chunks start only on END_SERVER_TICK.
+                    ready = world.getChunkSource().addTicketAndLoadWithRadius(SEARCH_TICKET, pending.chunk(), 0);
+                }
+                PendingSearch scheduled = new PendingSearch(pending.player(), search, pending.x(), pending.z(),
+                        startedNanos, ready, pending.fast());
+                pendingSearch = pending = scheduled;
+                if (!pending.fast()) return false;
+                if (!ready.isDone()) ready.whenComplete((unused, error) ->
+                        server.schedule(new net.minecraft.server.TickTask(server.getTickCount(), () -> {
+                            if (pendingSearch == scheduled) drainSearch(server, false);
+                        })));
+            } catch (RuntimeException error) {
+                SEARCHES.remove(pending.player());
+                releaseSearch(world);
+                MirrorTree.LOGGER.error("Cannot schedule dream candidate for {}", pending.player(), error);
+                player.sendSystemMessage(Component.literal("入梦区块加载失败，请稍后再试。"));
+                return pending.fast();
+            }
+        }
+        world.getChunkSource().addTicketWithRadius(SEARCH_TICKET, pending.chunk(), 0);
+        if (!pending.ready().isDone()) {
+            if (System.nanoTime() - pending.startedNanos() >= CHUNK_WAIT_NANOS) {
+                SEARCHES.remove(pending.player());
+                releaseSearch(world);
+                player.sendSystemMessage(Component.literal("入梦区块加载超时，请稍后再试。"));
+            }
+            return pending.fast() && pendingSearch == null;
+        }
+        candidatesThisTick++;
+        try {
+            pending.ready().join(); // Completed above: never wait for generation on the tick thread.
+            int x = pending.x(), z = pending.z();
+            if (world.getChunkSource().getChunkNow(x >> 4, z >> 4) == null)
+                throw new IllegalStateException("Dream candidate chunk did not finish loading");
             BlockPos candidate = new BlockPos(x, world.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
+            SEARCHES.remove(pending.player());
             if (safe(world, candidate)) {
-                SEARCHES.remove(entry.getKey());
                 if (player.teleportTo(world, x + .5, candidate.getY(), z + .5, Set.of(), 0, 0, false)) {
                     if (!player.isCreative()) player.setGameMode(GameType.SURVIVAL);
                     player.setRespawnPosition(new ServerPlayer.RespawnConfig(
@@ -160,9 +259,49 @@ public final class MTDream {
                     LanternInStormAPI.setRTPSpawn(player, candidate, false);
                 }
             } else if (search.attempts() + 1 >= MAX_ATTEMPTS) {
-                SEARCHES.remove(entry.getKey());
                 player.sendSystemMessage(Component.literal("这次没有找到安全入梦点，请再试一次。"));
-            } else SEARCHES.put(entry.getKey(), new Search(search.bed(), search.attempts() + 1));
+            } else SEARCHES.put(pending.player(), new Search(search.bed(), search.attempts() + 1));
+        } catch (RuntimeException error) {
+            SEARCHES.remove(pending.player());
+            MirrorTree.LOGGER.error("Cannot load dream candidate for {}", pending.player(), error);
+            player.sendSystemMessage(Component.literal("入梦区块加载失败，请稍后再试。"));
+        } finally {
+            releaseSearch(world);
+        }
+        return pending.fast();
+    }
+
+    private static BlockPos randomCandidate(ServerLevel world) {
+        var border = world.getWorldBorder();
+        // Match the block-column bounds used by safe(), before requesting any chunks.
+        int minX = Math.max(-RANGE, (int) Math.floor(border.getMinX()));
+        int maxX = Math.min(RANGE, (int) Math.ceil(border.getMaxX()) - 1);
+        int minZ = Math.max(-RANGE, (int) Math.floor(border.getMinZ()));
+        int maxZ = Math.min(RANGE, (int) Math.ceil(border.getMaxZ()) - 1);
+        if (minX > maxX || minZ > maxZ) return null;
+        int nearestX = Math.clamp(0, minX, maxX), nearestZ = Math.clamp(0, minZ, maxZ);
+        if ((long) nearestX*nearestX + (long) nearestZ*nearestZ > (long) RANGE*RANGE) return null;
+        for (int draw = 0; draw < MAX_POSITION_DRAWS; draw++) {
+            int x = world.getRandom().nextInt(maxX - minX + 1) + minX;
+            int z = world.getRandom().nextInt(maxZ - minZ + 1) + minZ;
+            BlockPos candidate = new BlockPos(x, 0, z);
+            if ((long) x*x + (long) z*z <= (long) RANGE*RANGE && border.isWithinBounds(candidate))
+                return candidate;
+        }
+        return null;
+    }
+
+    private static boolean validSearch(ServerPlayer player, Search search) {
+        return player != null && player.isAlive() && !player.isSpectator()
+                && player.level().dimension().equals(MirrorTree.bedroom)
+                && player.level().getBlockState(search.bed()).getBlock() instanceof BedBlock
+                && player.distanceToSqr(search.bed().getX() + .5, search.bed().getY() + .5, search.bed().getZ() + .5) <= 36;
+    }
+
+    private static void releaseSearch(ServerLevel world) {
+        if (pendingSearch != null) {
+            world.getChunkSource().removeTicketWithRadius(SEARCH_TICKET, pendingSearch.chunk(), 0);
+            pendingSearch = null;
         }
     }
 

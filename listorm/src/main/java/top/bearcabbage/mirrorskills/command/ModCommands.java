@@ -83,14 +83,14 @@ public class ModCommands {
         float beneficial = FloatArgumentType.getFloat(context, "beneficial_add");
         float harmful = FloatArgumentType.getFloat(context, "harmful_add");
 
-        SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
+        SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA).copy();
         data.setSkillEnabled(SkillData.SKILL_POTION_TIME, true);
         data.addParameter("beneficial_increase", beneficial);
         data.addParameter("harmful_reduction", harmful);
 
         context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.potion_time.updated",
                 player.getName().getString(), beneficial, data.getParameter("beneficial_increase"), harmful, data.getParameter("harmful_reduction")), true);
-        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
+        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
         return 1;
     }
 
@@ -98,13 +98,13 @@ public class ModCommands {
         ServerPlayer player = EntityArgument.getPlayer(context, "player");
         float level = FloatArgumentType.getFloat(context, "level_add");
 
-        SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
+        SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA).copy();
         data.setSkillEnabled(SkillData.SKILL_POTION_LEVEL, true);
         data.addParameter("level_adjustment", level);
 
         context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.potion_level.updated",
                 player.getName().getString(), level, data.getParameter("level_adjustment")), true);
-        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
+        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
         return 1;
     }
 
@@ -112,13 +112,13 @@ public class ModCommands {
         ServerPlayer player = EntityArgument.getPlayer(context, "player");
         float multiplier = FloatArgumentType.getFloat(context, "multiplier");
 
-        SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
+        SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA).copy();
         data.setSkillEnabled(SkillData.SKILL_CRIT_MULTIPLIER, true);
         data.setParameter("crit_multiplier", multiplier);
 
         context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.crit_multiplier.updated",
                 player.getName().getString(), multiplier, data.getParameter("crit_multiplier")), true);
-        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
+        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
         return 1;
     }
 
@@ -126,12 +126,12 @@ public class ModCommands {
         ServerPlayer player = EntityArgument.getPlayer(context, "player");
         float cooldown = FloatArgumentType.getFloat(context, "cooldown");
 
-        SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
+        SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA).copy();
         data.setParameter("invincible_cd", cooldown);
 
         context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.invincible_cd.updated",
                 player.getName().getString(), cooldown), true);
-        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
+        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
         return 1;
     }
 
@@ -139,14 +139,14 @@ public class ModCommands {
         ServerPlayer player = EntityArgument.getPlayer(context, "player");
         String skill = StringArgumentType.getString(context, "skill");
 
-        SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
+        SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA).copy();
         data.setSkillEnabled(skill, true);
         // Special handling for Periodic Absorption to trigger immediately
         if (SkillData.SKILL_PERIODIC_ABSORPTION.equals(skill)) {
              data.setParameter("periodic_timer", 12000.0f);
         }
 
-        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
+        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
         context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.grant.success", skill, player.getName().getString()), true);
         return 1;
     }
@@ -155,7 +155,7 @@ public class ModCommands {
         ServerPlayer player = EntityArgument.getPlayer(context, "player");
         String skill = StringArgumentType.getString(context, "skill");
 
-        SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA);
+        SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA).copy();
         data.setSkillEnabled(skill, false);
 
         // Reset params if it's a potion skill
@@ -175,7 +175,7 @@ public class ModCommands {
         } else {
             context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.revoke.success", skill, player.getName().getString()), true);
         }
-        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data.copy());
+        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
         return 1;
     }
 

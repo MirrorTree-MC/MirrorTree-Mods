@@ -18,6 +18,7 @@ import top.bearcabbage.mirrortree.starryskies.TopTrapdoorDecorator;
 
 public class MirrorTree implements ModInitializer {
  public static final String MOD_ID="mirrortree";
+ public static final String SERVER_SEASON_VERSION="AnotherAutumn";
  public static final org.slf4j.Logger LOGGER=org.slf4j.LoggerFactory.getLogger(MOD_ID);
  public static final ResourceKey<Level> bedroom=ResourceKey.create(Registries.DIMENSION,Identifier.fromNamespaceAndPath(MOD_ID,"bedroom"));
  public static final MTConfig config=new MTConfig(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("config.json"));

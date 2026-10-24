@@ -1,13 +1,31 @@
 package top.bearcabbage.mirrorskills;
 
+import io.netty.buffer.Unpooled;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
 import top.bearcabbage.mirrorskills.data.SkillData;
 
 public final class SkillDataCheck {
   private static void check(boolean condition, String message) {
     if (!condition) throw new AssertionError(message);
+  }
+
+  private static void checkNetworkRoundTrip(SkillData data) {
+    var buffer = new FriendlyByteBuf(Unpooled.buffer());
+    try {
+      SkillData.STREAM_CODEC.encode(buffer, data);
+      var decoded = SkillData.STREAM_CODEC.decode(buffer);
+      check(buffer.readableBytes() == 0
+              && data.toNbt(new CompoundTag()).equals(decoded.toNbt(new CompoundTag())),
+          "compact network snapshot preserves all persisted fields exactly");
+      var copy = decoded.copy();
+      decoded.addParameter("network_copy", 1);
+      check(copy.getParameter("network_copy") == 0, "decoded snapshots also isolate later mutations");
+    } finally {
+      buffer.release();
+    }
   }
 
   public static void main(String[] args) {
@@ -39,11 +57,26 @@ public final class SkillDataCheck {
             && !copy.toNbt(new CompoundTag()).contains("DeathLocation"),
         "cleared death location is absent from saved data");
 
+    var first = data.copy();
+    var second = data.copy();
+    data.setSkillEnabled("invisibility", false);
+    data.setCooldown("invisibility", -42);
+    data.addParameter("beneficial_increase", 0.4f);
+    first.setParameter("beneficial_increase", 3);
+    check(second.isSkillEnabled("invisibility")
+            && second.getCooldown("invisibility") == 1234567890123L
+            && second.getParameter("beneficial_increase") == 0.6f
+            && data.getParameter("beneficial_increase") == 1,
+        "mutating the source and sibling copies cannot change earlier snapshots");
+    checkNetworkRoundTrip(data);
+    checkNetworkRoundTrip(second);
+
     var empty = SkillData.fromNbt(new CompoundTag());
     check(!empty.hasDeathLocation() && empty.getLastDeathLocation() == null
             && empty.getLastDeathDimension() == null && empty.getParameter("missing") == 0
             && empty.getCooldown("missing") == 0 && !empty.isSkillEnabled("missing"),
         "empty legacy data retains defaults");
+    checkNetworkRoundTrip(empty);
 
     var legacy = new CompoundTag();
     var location = new CompoundTag();
@@ -55,6 +88,7 @@ public final class SkillDataCheck {
     check(legacyData.hasDeathLocation() && legacyData.getLastDeathDimension() == null
             && new Vec3(7.5, 64, -2.5).equals(legacyData.getLastDeathLocation()),
         "legacy death location without dimension stays available for current-world fallback");
+    checkNetworkRoundTrip(legacyData);
     legacy.put("DeathLocation", new CompoundTag());
     var origin = SkillData.fromNbt(legacy);
     check(origin.hasDeathLocation() && Vec3.ZERO.equals(origin.getLastDeathLocation())
@@ -64,6 +98,14 @@ public final class SkillDataCheck {
     check(!legacyData.hasDeathLocation()
             && !legacyData.toNbt(new CompoundTag()).contains("DeathLocation"),
         "null location is not persisted even when a dimension remains");
-    System.out.println("PASS: skill codec, all-map copy isolation, cooldown precision and legacy/null/cleared death locations");
+    checkNetworkRoundTrip(legacyData);
+    data.setSkillEnabled("custom:future_skill", false);
+    data.setCooldown("custom:negative", Long.MIN_VALUE);
+    data.setCooldown("custom:positive", Long.MAX_VALUE);
+    data.setParameter("custom:negative_zero", -0.0f);
+    data.setParameter("custom:infinity", Float.POSITIVE_INFINITY);
+    data.setParameter("custom:nan", Float.NaN);
+    checkNetworkRoundTrip(data);
+    System.out.println("PASS: persistent/network codecs, bidirectional copy isolation, arbitrary keys, numeric precision and legacy/null/cleared death locations");
   }
 }

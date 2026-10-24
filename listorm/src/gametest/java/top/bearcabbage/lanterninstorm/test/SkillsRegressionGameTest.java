@@ -243,7 +243,10 @@ public class SkillsRegressionGameTest {
       // Complete the client load handshake before testing lethal damage.
       player.hasChangedDimension();
       player.connection.handleAcceptPlayerLoad(new ServerboundPlayerLoadedPacket());
+      var beforeDeath = skills(player);
       player.hurtServer(nether, player.damageSources().genericKill(), Float.MAX_VALUE);
+      helper.assertTrue(!beforeDeath.hasDeathLocation(),
+          "death recording leaves an earlier queued snapshot unchanged");
       helper.assertTrue(player.isDeadOrDying() && deathPos.equals(skills(player).getLastDeathLocation()),
           "actual death records its location");
       player.connection.handleClientCommand(new ServerboundClientCommandPacket(

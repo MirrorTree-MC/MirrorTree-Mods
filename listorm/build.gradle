@@ -1,5 +1,5 @@
 group = 'top.bearcabbage.lanterninstorm'
-version = '6.0.0-alpha.5+26.1.2'
+version = '6.0.0-alpha.6+26.1.2'
 base { archivesName = 'lantern-in-storm-rebirth' }
 
 loom {

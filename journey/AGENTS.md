@@ -1,10 +1,17 @@
 # Journey maintenance
 
-- Follow the root [AGENTS.md](../AGENTS.md). Keep client content and server dream travel in this module on the shared main branch.
-- Preserve existing item, decorator, mixin and save identifiers. Never reset production player data as part of an upgrade.
-- Bedroom restrictions apply to ordinary players; creative administrators may build. LIStorm owns nightmare safety and lamp behavior.
-- All world reads, teleportation and player changes run on the server thread. First-dream search is bounded; load a candidate chunk before querying its height.
-- Capture effect copies and persist the dream snapshot before leaving the overworld. Preserve global bedroom spawn independently from individual dream respawns.
-- Build from the repository root with `./gradlew :journey:build :journey:validationJar`; LIStorm is built through the project dependency.
-- `validationJar` is an isolated-server probe. It changes test blocks/player data and stops its test server. NEVER install it in production or include it in distribution ZIPs.
-- Run the probe only against a disposable copy with bedroom and Starry Skies present, and authentication disabled for the embedded test player. Read `bedroom-fix-regression.json`.
+Follow the root [AGENTS.md](../AGENTS.md). Common code owns bedroom/dream travel; client mixins belong in `src/client/java`. Preserve item/decorator/mixin IDs, config paths and player save formats.
+
+- Bedroom restrictions apply to ordinary players; creative administrators may build. LIStorm owns nightmare safety and lamp behavior. Preserve global bedroom spawn independently from each player's dream respawn.
+- All world reads, teleportation and player mutations run on the server thread. First-dream search allows one pending chunk load globally and rotates unsuccessful players to the queue tail, retaining the 32-attempt per-player bound. Schedule with `addTicketAndLoadWithRadius`, poll completion, and hold the search ticket until height/safety checks finish; `getChunkFuture` still blocks when called on the server thread. Filter candidates against the world border before loading, bound coordinate sampling, and end an unfinished chunk wait after 30 seconds of monotonic time. Cancel searches when players become spectators. Release tickets on cancellation, timeout, completion and stopping. Loaded chunks and chunks already cached as full may advance at entry or on server-thread completion, with a shared limit of four candidates and a soft 2 ms work budget per server tick. Unknown/proto chunks retain END_SERVER_TICK scheduling and polling; do not add disk probes or pre-generation to classify them.
+- Snapshot complete effects through their codec, including hidden chains/skill markers, and persist the independent JSON snapshot before leaving the overworld. Do not replace this with vanilla shallow effect copies or defer the write without defining failure/exit semantics.
+- Keep health, hunger, saturation, exhaustion, dimension and position restoration. Legacy `config/mirrortree/dream_data.json` remains readable and must not be deleted by migration.
+- Keep search candidate first-occurrence order and decorator placement/random-consumption order. Empty `init()` calls can trigger static registration; do not remove them as no-ops.
+
+- `MirrorTree.SERVER_SEASON_VERSION` is the release-time server season label used by the client window title. Update it for each season; it is independent of the mod artifact version and is not fetched from the connected server. Keep the title mixin client-only, read the Minecraft version at runtime and retain the fixed title across world/session changes.
+
+## Targeted verification
+
+- From the root run `./gradlew :journey:build :journey:validationJar`; LIStorm is built through the project dependency. `python journey/tools/check_loop_equivalence.py` checks bounded search/decorator event equivalence when those loops change; it is not a Minecraft-world or performance test.
+- `validationJar` only compiles a destructive isolated-server probe. Never install it in production or package it with release JARs. To run it, use a disposable server copy with bedroom and Starry Skies, authentication disabled only for its embedded test player; it modifies blocks/player data and stops that server.
+- Inspect `bedroom-fix-regression.json` for actual bed/wakeup, first-dream search, spawn isolation, restrictions, effect/vitals disk round-trip and shared LIStorm lamp/safety assertions. Embedded-player results do not replace a human client session or production authentication/network verification.

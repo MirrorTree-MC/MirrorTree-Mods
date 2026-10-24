@@ -14,7 +14,7 @@ public class SyncSignNotice implements ClientModInitializer {
     public static final String MOD_ID = "sync-sign-notice";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
     private static final SConfig config = new SConfig(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("config.json"));
-    private static final SConfig noticeCache = new SConfig(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("notice_cache.json"));
+    private static final SConfig noticeCache = new SConfig(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("notice_cache.json"), true);
     public static int maxNewsCount = 5;
     private static int refreshInterval = 6000, clientTick;
     private static volatile List<SignText> newsList = List.of();
