@@ -206,8 +206,9 @@ public final class UpdateClient {
                 }
             }
         }
-        for (String id : manifest.removeModIds()) for (Path path : local.getOrDefault(id, List.of()))
-            old.put(root.relativize(path).toString().replace('\\', '/'), UpdateApplier.hash(path));
+        // The release is an additive requirement, not a mirror of the whole instance.
+        // Legacy removeModIds are intentionally ignored. Only obsolete filenames of
+        // a mod ID still present in this release may be replaced above.
         return new Plan(manifest, List.copyOf(downloads), Map.copyOf(old));
     }
 

@@ -26,9 +26,9 @@ def digest(path):
     return h.hexdigest()
 
 
-def relative_file(source, name):
+def relative_file(source, name, require_file=True):
     rel = PurePosixPath(name)
-    if not name or "\\" in name or ":" in name or rel.is_absolute() or ".." in rel.parts:
+    if not name or name != rel.as_posix() or "\\" in name or ":" in name or rel.is_absolute() or ".." in rel.parts:
         raise ValueError(f"Invalid instance path: {name}")
     if not ((len(rel.parts) == 2 and rel.parts[0] == "mods" and name.endswith(".jar"))
             or (len(rel.parts) == 2 and rel.parts[0] == "resourcepacks" and name.endswith(".zip"))
@@ -39,7 +39,7 @@ def relative_file(source, name):
         p /= part
         if p.is_symlink():
             raise ValueError(f"Symlink is not publishable: {p}")
-    if not p.is_file():
+    if require_file and not p.is_file():
         raise ValueError(f"Not a file: {p}")
     return p
 
@@ -77,15 +77,10 @@ def keygen(key):
     print("trustedPublicKey=" + public_key(key))
 
 
-def publish(source, root, key, release, sequence, extras=(), removals=()):
-    source, root = source.resolve(), root.resolve()
-    if not release or len(release) > 200 or sequence < 0:
-        raise ValueError("Invalid release label or sequence")
-    if (root / "latest").exists():
-        previous = (root / "latest").read_text().strip()
-        m = json.loads((root / "releases" / previous / "manifest.json").read_text())
-        if sequence <= m["sequence"]:
-            raise ValueError("Sequence must increase for every publication, including rollbacks")
+def collect_files(source, extras=(), removals=()):
+    """Validate a complete snapshot without changing the published release."""
+    if removals:
+        raise ValueError('Automatic client removal is disabled; unpublish the mod to retain player additions')
     paths = ["mods/" + p.name for p in sorted((source / "mods").glob("*.jar"))] + list(extras)
     if not paths:
         raise ValueError("No client mods to publish")
@@ -96,15 +91,37 @@ def publish(source, root, key, release, sequence, extras=(), removals=()):
         names.add(name.lower())
         path = relative_file(source, name)
         entry = {"path": name, "sha256": digest(path), "size": path.stat().st_size}
+        if entry["size"] > 1024**3:
+            raise ValueError(f"File exceeds client size limit: {name}")
         if name.startswith("mods/"):
             with ZipFile(path) as z:
                 meta = json.loads(z.read("fabric.mod.json"))
             if meta.get("environment") == "server":
                 continue
-            if not MOD_ID.fullmatch(meta["id"]) or meta["id"] in identities:
-                raise ValueError(f"Invalid/duplicate Fabric ID: {meta['id']}")
+            if not isinstance(meta.get("id"), str) or not MOD_ID.fullmatch(meta["id"]) or meta["id"] in identities:
+                raise ValueError(f"Invalid/duplicate Fabric ID: {meta.get('id')}")
+            if not isinstance(meta.get("version"), str) or not meta["version"].strip():
+                raise ValueError(f"Invalid Fabric version: {name}")
             identities.add(meta["id"])
             entry.update(modId=meta["id"], version=meta["version"])
+        entries.append(entry)
+    if not entries or len(entries) > 4096 or sum(x["size"] for x in entries) > 8 * 1024**3:
+        raise ValueError("Empty or oversized release")
+    return entries
+
+
+def publish(source, root, key, release, sequence, extras=(), removals=()):
+    source, root = source.resolve(), root.resolve()
+    if not release or len(release) > 200 or sequence < 0:
+        raise ValueError("Invalid release label or sequence")
+    if (root / "latest").exists():
+        previous = (root / "latest").read_text().strip()
+        m = json.loads((root / "releases" / previous / "manifest.json").read_text())
+        if sequence <= m["sequence"]:
+            raise ValueError("Sequence must increase for every publication, including rollbacks")
+    entries = collect_files(source, extras, removals)
+    for entry in entries:
+        path = relative_file(source, entry["path"])
         blob = root / "files" / entry["sha256"]
         if blob.exists():
             if blob.is_symlink() or digest(blob) != entry["sha256"]:
@@ -120,11 +137,6 @@ def publish(source, root, key, release, sequence, extras=(), removals=()):
                 os.replace(temp, blob)
             finally:
                 if os.path.exists(temp): os.unlink(temp)
-        entries.append(entry)
-    if not entries or len(entries) > 4096 or sum(x["size"] for x in entries) > 8 * 1024**3:
-        raise ValueError("Empty or oversized release")
-    if any(not MOD_ID.fullmatch(x) or x in identities or x == "modpackupdater" for x in removals):
-        raise ValueError("Invalid removed mod ID")
     manifest = {"schemaVersion": 1, "minecraft": "26.1.2", "release": release,
                 "sequence": sequence, "files": entries, "removeModIds": list(removals)}
     raw = (json.dumps(manifest, ensure_ascii=False, indent=2) + "\n").encode()
@@ -224,7 +236,7 @@ def main():
     pub.add_argument("--release", required=True)
     pub.add_argument("--sequence", type=int, required=True)
     pub.add_argument("--extra", action="append", default=[])
-    pub.add_argument("--remove-mod", action="append", default=[])
+    pub.add_argument("--remove-mod", action="append", default=[], help=argparse.SUPPRESS)
     serve = sub.add_parser("serve")
     serve.add_argument("--root", type=Path, required=True)
     serve.add_argument("--bind", default="127.0.0.1")

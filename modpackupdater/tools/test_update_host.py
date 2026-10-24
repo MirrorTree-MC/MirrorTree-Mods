@@ -65,6 +65,8 @@ class HostChecks(unittest.TestCase):
         with self.assertRaises(ValueError): host.publish(self.source, self.hosted, self.key, 'rollback', 3)
         with self.assertRaises(ValueError): host.keygen(self.key)
         self.assertEqual(self.key.stat().st_mode & 0o777, 0o600)
+        with self.assertRaises(ValueError):
+            host.publish(self.source, self.hosted, self.key, 'delete-personal-mod', 5, removals=['personal_mod'])
 
     def test_duplicate_ids_and_path_policy(self):
         shutil.copy(self.source / 'mods/test.jar', self.source / 'mods/duplicate.jar')

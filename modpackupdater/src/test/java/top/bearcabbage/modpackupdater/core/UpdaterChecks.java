@@ -60,6 +60,13 @@ public final class UpdaterChecks {
         byte[] old = jar("example", "1"), current = jar("example", "2");
         Files.write(root.resolve("mods/old.jar"), old);
         Files.write(root.resolve("mods/unrelated.jar"), jar("unrelated", "9"));
+        Map<String, byte[]> personalFiles = Map.of("resourcepacks/personal.zip", new byte[] {1, 2, 3},
+                "saves/personal-world/datapacks/personal.zip", new byte[] {4, 5, 6},
+                "config/personal.json", "{\"personal\":true}".getBytes());
+        for (var file : personalFiles.entrySet()) {
+            Path path = root.resolve(file.getKey()); Files.createDirectories(path.getParent());
+            Files.write(path, file.getValue());
+        }
         var pair = KeyPairGenerator.getInstance("Ed25519").generateKeyPair();
         String key = Base64.getEncoder().encodeToString(pair.getPublic().getEncoded());
         var entry = new UpdateClient.FileEntry("mods/new.jar", sha(current), current.length, "example", "2");
@@ -110,7 +117,19 @@ public final class UpdaterChecks {
             check(applied.waitFor() == 0, "standalone helper works without Fabric, Minecraft or Gson");
             check(Files.readAllBytes(root.resolve("mods/new.jar")).length == current.length && !Files.exists(root.resolve("mods/old.jar")), "new mod replaced old version");
             check(Files.exists(root.resolve("mods/unrelated.jar")), "unmanaged mods preserved");
+            for (var file : personalFiles.entrySet())
+                check(Arrays.equals(Files.readAllBytes(root.resolve(file.getKey())), file.getValue()),
+                        "user additions preserved byte-for-byte: " + file.getKey());
             check(client.check().changeCount() == 0, "same signed release is up to date");
+            var legacyRemoval = new UpdateClient.Manifest(1, "26.1.2", "legacy-removal", 2,
+                    List.of(entry), List.of("unrelated"));
+            check(client.plan(legacyRemoval).changeCount() == 0, "legacy removal declarations cannot delete user-added mods");
+            byte[] extra = Files.readAllBytes(root.resolve("mods/unrelated.jar"));
+            var unpublish = new UpdateClient.Manifest(1, "26.1.2", "unpublish", 2,
+                    List.of(new UpdateClient.FileEntry("mods/unrelated.jar", sha(extra), extra.length, "unrelated", "9")),
+                    List.of("example"));
+            check(client.plan(unpublish).changeCount() == 0 && Files.exists(root.resolve("mods/new.jar")),
+                    "unpublishing a formerly managed mod preserves its client file");
             try (var backups = Files.walk(root.resolve("mod-update-backups"))) {
                 check(backups.anyMatch(p -> p.getFileName().toString().equals("old.jar")), "replaced mod has verified backup");
             }
@@ -119,6 +138,7 @@ public final class UpdaterChecks {
             for (String path : List.of("../escape.jar", "mods/../../escape.jar", "/tmp/mod.jar", "config/modpackupdater.json", "saves/level.dat", "mods\\escape.jar"))
                 rejects(() -> UpdateApplier.target(root, path), "reject protected path " + path);
             Path outside = Files.createTempDirectory("updater-outside-");
+            Files.delete(root.resolve("config/personal.json")); Files.delete(root.resolve("config"));
             Files.createSymbolicLink(root.resolve("config"), outside);
             rejects(() -> UpdateApplier.target(root, "config/test.json"), "reject symlink escape");
             Files.delete(root.resolve("config"));

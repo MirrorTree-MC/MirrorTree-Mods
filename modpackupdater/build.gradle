@@ -1,5 +1,5 @@
 group = 'top.bearcabbage.modpackupdater'
-version = '3.0.0+26.1.2'
+version = '3.0.1+26.1.2'
 base { archivesName = 'modpackupdater' }
 
 loom {

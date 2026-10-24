@@ -1,0 +1,6 @@
+/client-source/
+/public/
+/incoming/
+/admin-backups/
+/.publish-*
+/.config-edit-*
