@@ -1,14 +1,14 @@
 import base64
 import hashlib
 import json
-from pathlib import Path
 import shutil
 import subprocess
 import tempfile
 import threading
 import unittest
-from urllib.request import urlopen
+from pathlib import Path
 from urllib.error import HTTPError
+from urllib.request import urlopen
 from zipfile import ZipFile
 
 import update_host as host

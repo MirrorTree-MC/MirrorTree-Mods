@@ -19,16 +19,11 @@ import net.minecraft.world.level.material.Fluids;
 import top.bearcabbage.annoyingeffects.StatusEffectInstanceStackHolder;
 import top.bearcabbage.annoyingeffects.utils.NoSavePlayerData;
 
-public class WaterFillingStatusEffect extends AnnoyingStatusEffect {
+public class WaterFillingStatusEffect extends TickingAnnoyingStatusEffect {
   public final double REACH = 3F;
   public final double BREAKING_FORCE = 2.5F;
 
   public static final NoSavePlayerData<Integer> WaterTicks = new NoSavePlayerData<>(0);
-
-  @Override
-  public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
-    return true;
-  }
 
   @Override
   public boolean applyEffectTick(

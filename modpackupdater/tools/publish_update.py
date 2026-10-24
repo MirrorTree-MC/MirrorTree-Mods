@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """Interactive administrator workflow for a signed client update service (Python 3.10+)."""
 import argparse
-from datetime import datetime
 import fcntl
 import json
 import os
-from pathlib import Path
 import shutil
 import subprocess
 import tempfile
 import time
 import uuid
-from zipfile import ZipFile, BadZipFile
+from datetime import datetime
+from pathlib import Path
+from zipfile import BadZipFile, ZipFile
 
 import update_host as host
 
@@ -242,6 +242,7 @@ class Wizard:
         entries = host.collect_files(self.source, sorted(self.extras))
         before = {x['path']: x for x in self.previous['files']}
         after = {x['path']: x for x in entries}
+        published_ids = {entry.get('modId') for entry in entries}
         changed = [x for x in entries if before.get(x['path']) != x]
         self.say(f'\n完整发布：{len(entries)} 个文件；本次新增/变化 {len(changed)} 个文件。')
         for entry in changed:
@@ -249,7 +250,7 @@ class Wizard:
         for name in sorted(before.keys() - after.keys()):
             entry = before[name]
             identity = entry.get('modId')
-            replaced = identity and any(x.get('modId') == identity for x in entries)
+            replaced = identity and identity in published_ids
             action = '替换旧文件' if replaced else '停止同步，客户端保留'
             self.say(f'  {action} {name}')
         self.say('清单外的模组、配置、资源包和本地世界数据包均保留。')
@@ -309,8 +310,8 @@ class Wizard:
                 elif choice == '7':
                     for entry in host.collect_files(self.source):
                         self.say(f'{entry["modId"]} {entry["version"]} · {entry["path"]}')
-                elif choice == '8':
-                    if self.publish(): return
+                elif choice == '8' and self.publish():
+                    return
             except (ValueError, OSError, KeyError, BadZipFile, subprocess.CalledProcessError) as e:
                 self.say(f'操作未完成：{e}。请预览当前状态后重试。')
             except (EOFError, KeyboardInterrupt):
@@ -335,8 +336,8 @@ def main():
         with (args.base / '.publish-wizard.lock').open('a') as lock:
             try:
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError:
-                raise ValueError('另一个发布向导正在运行')
+            except BlockingIOError as error:
+                raise ValueError('另一个发布向导正在运行') from error
             Wizard(args.base, args.key).run()
     except (ValueError, OSError, KeyError, BadZipFile) as e:
         parser.exit(1, f'无法继续：{e}\n')

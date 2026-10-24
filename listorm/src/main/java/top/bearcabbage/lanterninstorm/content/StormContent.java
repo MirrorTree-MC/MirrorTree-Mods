@@ -26,28 +26,12 @@ public final class StormContent {
   public static void initialize() {
     registerLamp("cubic_glass_lantern", 0, SoundType.GLASS, 10, MapColor.COLOR_CYAN);
     registerLamp("white_paper_lantern", 0, SoundType.LANTERN, 10, MapColor.SNOW);
-    registerLamp("oak_wooden_lantern", 0, SoundType.WOOD, 10, MapColor.COLOR_BROWN);
-    registerLamp("spruce_wooden_lantern", 0, SoundType.WOOD, 10, MapColor.COLOR_BROWN);
-    registerLamp("birch_wooden_lantern", 0, SoundType.WOOD, 10, MapColor.COLOR_BROWN);
-    registerLamp("jungle_wooden_lantern", 0, SoundType.WOOD, 10, MapColor.COLOR_BROWN);
-    registerLamp("acacia_wooden_lantern", 0, SoundType.WOOD, 10, MapColor.COLOR_BROWN);
-    registerLamp("dark_oak_wooden_lantern", 0, SoundType.WOOD, 10, MapColor.COLOR_BROWN);
-    registerLamp("mangrove_wooden_lantern", 0, SoundType.WOOD, 10, MapColor.COLOR_BROWN);
-    registerLamp("cherry_wooden_lantern", 0, SoundType.WOOD, 10, MapColor.COLOR_BROWN);
-    registerLamp("bamboo_wooden_lantern", 0, SoundType.WOOD, 10, MapColor.COLOR_BROWN);
-    registerLamp("crimson_wooden_lantern", 0, SoundType.WOOD, 10, MapColor.COLOR_BROWN);
-    registerLamp("warped_wooden_lantern", 0, SoundType.WOOD, 10, MapColor.COLOR_BROWN);
-    registerLamp("fir_wooden_lantern", 0, SoundType.STONE, 10, MapColor.COLOR_BROWN);
-    registerLamp("pine_wooden_lantern", 0, SoundType.STONE, 10, MapColor.COLOR_BROWN);
-    registerLamp("maple_wooden_lantern", 0, SoundType.STONE, 10, MapColor.COLOR_BROWN);
-    registerLamp("redwood_wooden_lantern", 0, SoundType.STONE, 10, MapColor.COLOR_BROWN);
-    registerLamp("mahogany_wooden_lantern", 0, SoundType.STONE, 10, MapColor.COLOR_BROWN);
-    registerLamp("jacaranda_wooden_lantern", 0, SoundType.STONE, 10, MapColor.COLOR_BROWN);
-    registerLamp("palm_wooden_lantern", 0, SoundType.STONE, 10, MapColor.COLOR_BROWN);
-    registerLamp("willow_wooden_lantern", 0, SoundType.STONE, 10, MapColor.COLOR_BROWN);
-    registerLamp("dead_wooden_lantern", 0, SoundType.STONE, 10, MapColor.COLOR_BROWN);
-    registerLamp("magic_wooden_lantern", 0, SoundType.STONE, 10, MapColor.COLOR_BROWN);
-    registerLamp("umbran_wooden_lantern", 0, SoundType.STONE, 10, MapColor.COLOR_BROWN);
+    for (String wood : List.of("oak", "spruce", "birch", "jungle", "acacia",
+        "dark_oak", "mangrove", "cherry", "bamboo", "crimson", "warped"))
+      registerLamp(wood + "_wooden_lantern", 0, SoundType.WOOD, 10, MapColor.COLOR_BROWN);
+    for (String wood : List.of("fir", "pine", "maple", "redwood", "mahogany",
+        "jacaranda", "palm", "willow", "dead", "magic", "umbran"))
+      registerLamp(wood + "_wooden_lantern", 0, SoundType.STONE, 10, MapColor.COLOR_BROWN);
     registerLamp("hellbark_wooden_lantern", 0, SoundType.STONE, 0, MapColor.COLOR_BROWN);
     registerLamp("empyreal_wooden_lantern", 0, SoundType.STONE, 0, MapColor.COLOR_BROWN);
     registerLamp("midas_gold_lantern", 2, SoundType.METAL, 10, MapColor.GOLD);

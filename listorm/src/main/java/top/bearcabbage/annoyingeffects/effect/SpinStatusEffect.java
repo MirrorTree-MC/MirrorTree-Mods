@@ -2,13 +2,8 @@ package top.bearcabbage.annoyingeffects.effect;
 
 import net.minecraft.world.entity.LivingEntity;
 
-public class SpinStatusEffect extends AnnoyingStatusEffect {
+public class SpinStatusEffect extends TickingAnnoyingStatusEffect {
   public static final double ANGLE_PER_TICK = -9F;
-
-  @Override
-  public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
-    return true;
-  }
 
   @Override
   public boolean applyEffectTick(

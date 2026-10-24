@@ -10,13 +10,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
 
-public class CreeperphobiaStatusEffect extends AnnoyingStatusEffect {
+public class CreeperphobiaStatusEffect extends TickingAnnoyingStatusEffect {
   public static final int AVERAGE_SOUND_INTERVAL = 1000;
-
-  @Override
-  public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
-    return true;
-  }
 
   @Override
   public boolean applyEffectTick(

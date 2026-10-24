@@ -40,11 +40,9 @@ public class TanglingNightmareStatusEffect extends MobEffect {
     double factor = Math.scalb(1.0, Math.min(30, strength));
     var random = RandomSource.create(entity.getRandom().nextLong());
     if (entity instanceof Player player) {
-      int count =
-          (int)
-              entity.getActiveEffects().stream()
-                  .filter(e -> e.getEffect().value() instanceof AnnoyingStatusEffect)
-                  .count();
+      int count = 0;
+      for (var effect : entity.getActiveEffects())
+        if (effect.getEffect().value() instanceof AnnoyingStatusEffect) count++;
       double progress =
           AnnoyingBar.get(player)
               + (weak ? 1.0 / 300 : 1.0 / 100) * Math.pow(weak ? .5 : .8, count) * factor;
@@ -101,11 +99,10 @@ public class TanglingNightmareStatusEffect extends MobEffect {
       boolean weak,
       int strength) {
     if (entity.hasEffect(effect)) return null;
-    String prefix = weak ? "weak_" : "";
-    int seconds = rule.get(prefix + "duration");
+    int seconds = rule.get(weak ? "weak_duration" : "duration");
     if (seconds < 0) return null;
     int duration = (int) Math.min(Integer.MAX_VALUE, seconds * 20L);
-    int interval = (int) Math.min(Integer.MAX_VALUE, rule.get(prefix + "interval") * 20L);
+    int interval = (int) Math.min(Integer.MAX_VALUE, rule.get(weak ? "weak_interval" : "interval") * 20L);
     if (effect.equals(AnnoyingEffects.CHANNELING) && !level.isThundering()) return null;
     if (effect.equals(AnnoyingEffects.HORSELESS) && entity.getVehicle() instanceof Horse)
       interval = Math.max(1, interval / 5);
@@ -120,6 +117,6 @@ public class TanglingNightmareStatusEffect extends MobEffect {
     }
     if (duration <= 0 || interval <= 0) return null;
     return new Candidate(
-        effect, duration, rule.get(prefix + "amplifier") + Math.max(0, strength / 31), interval);
+        effect, duration, rule.get(weak ? "weak_amplifier" : "amplifier") + Math.max(0, strength / 31), interval);
   }
 }

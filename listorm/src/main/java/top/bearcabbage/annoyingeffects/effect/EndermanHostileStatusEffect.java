@@ -5,12 +5,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.phys.AABB;
 
-public class EndermanHostileStatusEffect extends AnnoyingStatusEffect {
-  @Override
-  public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
-    return true;
-  }
-
+public class EndermanHostileStatusEffect extends TickingAnnoyingStatusEffect {
   @Override
   public boolean applyEffectTick(
       net.minecraft.server.level.ServerLevel serverLevel, LivingEntity entity, int amplifier) {
