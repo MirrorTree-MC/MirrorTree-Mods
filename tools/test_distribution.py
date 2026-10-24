@@ -90,6 +90,22 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual(self.old_data, self.old.read_bytes())
         self.assertFalse((self.target.parent / "mod-update-backups").exists())
 
+    def test_source_changed_during_staging_is_rejected_before_installed_moves(self):
+        copy = update_mods.shutil.copy2
+
+        def tamper_during_copy(source, destination):
+            source.write_bytes(b"changed after manifest verification")
+            return copy(source, destination)
+
+        with (
+            patch.object(update_mods.shutil, "copy2", tamper_during_copy),
+            self.assertRaises(OSError),
+        ):
+            self.update(True)
+        self.assertEqual(self.old_data, self.old.read_bytes())
+        self.assertEqual(self.unrelated_data, self.unrelated.read_bytes())
+        self.assertFalse((self.target / "new.jar").exists())
+
     def test_unrelated_filename_collision_is_rejected(self):
         collision = jar(self.target / "new.jar", "unrelated2")
         original = collision.read_bytes()

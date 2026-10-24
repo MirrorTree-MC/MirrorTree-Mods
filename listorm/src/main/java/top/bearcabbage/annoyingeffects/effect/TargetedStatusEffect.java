@@ -6,15 +6,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-public class TargetedStatusEffect extends AnnoyingStatusEffect {
+public class TargetedStatusEffect extends TickingAnnoyingStatusEffect {
   public static final double RADIUS = 16F;
   public static final double MAX_ACCELERATION = 0.6F;
   public static final double DAMP = 0.95F;
-
-  @Override
-  public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
-    return true;
-  }
 
   @Override
   public boolean applyEffectTick(

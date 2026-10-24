@@ -39,7 +39,7 @@ public class ModCommands {
                                                 SkillData.SKILL_INVISIBILITY, SkillData.SKILL_DASHING, SkillData.SKILL_HEALING, SkillData.SKILL_DEATH_FLASHBACK,
                                                 SkillData.SKILL_PERIODIC_ABSORPTION, SkillData.SKILL_BOW_FAST_CHARGE, SkillData.SKILL_BOW_DYNAMIC_CRIT,
                                                 SkillData.SKILL_CRIT_MULTIPLIER, SkillData.SKILL_TIPPED_ARROW, SkillData.SKILL_INVINCIBLE), b))
-                                        .executes(ModCommands::grantSkill))))
+                                        .executes(context -> setSkill(context, true)))))
 
                 // Revoke
                 .then(Commands.literal("revoke")
@@ -50,7 +50,7 @@ public class ModCommands {
                                                 SkillData.SKILL_DEATH_FLASHBACK, SkillData.SKILL_POTION_TIME, SkillData.SKILL_POTION_LEVEL,
                                                 SkillData.SKILL_PERIODIC_ABSORPTION, SkillData.SKILL_BOW_FAST_CHARGE, SkillData.SKILL_BOW_DYNAMIC_CRIT,
                                                 SkillData.SKILL_CRIT_MULTIPLIER, SkillData.SKILL_TIPPED_ARROW, SkillData.SKILL_INVINCIBLE), b))
-                                        .executes(ModCommands::revokeSkill))))
+                                        .executes(context -> setSkill(context, false)))))
 
                 // Param
                 .then(Commands.literal("param")
@@ -135,47 +135,29 @@ public class ModCommands {
         return 1;
     }
 
-    private static int grantSkill(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    private static int setSkill(CommandContext<CommandSourceStack> context, boolean enabled) throws CommandSyntaxException {
         ServerPlayer player = EntityArgument.getPlayer(context, "player");
         String skill = StringArgumentType.getString(context, "skill");
-
         SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA).copy();
-        data.setSkillEnabled(skill, true);
-        // Special handling for Periodic Absorption to trigger immediately
-        if (SkillData.SKILL_PERIODIC_ABSORPTION.equals(skill)) {
-             data.setParameter("periodic_timer", 12000.0f);
-        }
-
-        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
-        context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.grant.success", skill, player.getName().getString()), true);
-        return 1;
-    }
-
-    private static int revokeSkill(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer player = EntityArgument.getPlayer(context, "player");
-        String skill = StringArgumentType.getString(context, "skill");
-
-        SkillData data = ((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA).copy();
-        data.setSkillEnabled(skill, false);
-
-        // Reset params if it's a potion skill
-        if (SkillData.SKILL_POTION_TIME.equals(skill)) {
-            data.setParameter("beneficial_increase", 0f);
-            data.setParameter("harmful_reduction", 0f);
-            context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.revoke.reset", skill), true);
-        } else if (SkillData.SKILL_POTION_LEVEL.equals(skill)) {
-            data.setParameter("level_adjustment", 0f);
-            context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.revoke.reset", skill), true);
-        } else if (SkillData.SKILL_CRIT_MULTIPLIER.equals(skill)) {
-            data.setParameter("crit_multiplier", 0f);
-            context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.revoke.reset", skill), true);
-        } else if (SkillData.SKILL_PERIODIC_ABSORPTION.equals(skill)) {
-            data.setParameter("periodic_timer", 0f);
-            context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.revoke.reset", skill), true);
+        data.setSkillEnabled(skill, enabled);
+        if (enabled) {
+            if (SkillData.SKILL_PERIODIC_ABSORPTION.equals(skill))
+                data.setParameter("periodic_timer", 12000.0f);
+            ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
+            context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.grant.success", skill, player.getName().getString()), true);
         } else {
-            context.getSource().sendSuccess(() -> Component.translatable("command.mirrorskills.revoke.success", skill, player.getName().getString()), true);
+            var parameters = switch (skill) {
+                case SkillData.SKILL_POTION_TIME -> List.of("beneficial_increase", "harmful_reduction");
+                case SkillData.SKILL_POTION_LEVEL -> List.of("level_adjustment");
+                case SkillData.SKILL_CRIT_MULTIPLIER -> List.of("crit_multiplier");
+                case SkillData.SKILL_PERIODIC_ABSORPTION -> List.of("periodic_timer");
+                default -> List.<String>of();
+            };
+            for (String parameter : parameters) data.setParameter(parameter, 0f);
+            context.getSource().sendSuccess(() -> Component.translatable(parameters.isEmpty()
+                    ? "command.mirrorskills.revoke.success" : "command.mirrorskills.revoke.reset", skill), true);
+            ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
         }
-        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
         return 1;
     }
 

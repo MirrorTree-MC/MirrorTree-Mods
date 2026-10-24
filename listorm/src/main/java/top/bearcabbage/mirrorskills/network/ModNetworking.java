@@ -40,13 +40,10 @@ public final class ModNetworking {
 
         long currentTime = player.level().getGameTime();
         long lastTime = data.getCooldown(skillId);
+        String activation = null;
 
         if (skillId.equals(SkillData.SKILL_INVISIBILITY)) {
-            if (lastTime != 0 && currentTime - lastTime < 1200) {
-                long remainingSeconds = (1200 - (currentTime - lastTime)) / 20;
-                player.sendSystemMessage(Component.translatable("message.mirrorskills.cooldown", remainingSeconds), true);
-                return;
-            }
+            if (onCooldown(player, currentTime, lastTime, 1200)) return;
             player.addEffect(new MobEffectInstance(
                     MobEffects.INVISIBILITY,
                     5 * 20,
@@ -63,10 +60,7 @@ public final class ModNetworking {
                 0.05 // speed
             );
 
-            data = data.copy();
-            data.setCooldown(skillId, currentTime);
-            ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
-            player.sendSystemMessage(Component.translatable("message.mirrorskills.invisibility_activated"), true);
+            activation = "message.mirrorskills.invisibility_activated";
         } else if (skillId.equals(SkillData.SKILL_DASHING)) {
             if (lastTime != 0 && currentTime - lastTime < 20) return;
 
@@ -75,38 +69,31 @@ public final class ModNetworking {
             player.hurtMarked = true; // Mark velocity as modified
             player.connection.send(new ClientboundSetEntityMotionPacket(player));
 
-            data = data.copy();
-            data.setCooldown(skillId, currentTime);
-            ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
         } else if (SkillData.SKILL_INVINCIBLE.equals(skillId)) {
             float cooldownSeconds = data.getParameter("invincible_cd");
             if (cooldownSeconds <= 0) cooldownSeconds = 120.0f;
 
-            if (lastTime != 0 && currentTime - lastTime < (long)(cooldownSeconds * 20)) {
-                long remainingSeconds = ((long)(cooldownSeconds * 20) - (currentTime - lastTime)) / 20;
-                player.sendSystemMessage(Component.translatable("message.mirrorskills.cooldown", remainingSeconds), true);
-                return;
-            }
+            if (onCooldown(player, currentTime, lastTime, (long)(cooldownSeconds * 20))) return;
 
-            data = data.copy();
-            data.setParameter("invincible_ticks", 100.0f);
-
-            data.setCooldown(SkillData.SKILL_INVINCIBLE, currentTime);
-            ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
-            player.sendSystemMessage(Component.translatable("message.mirrorskills.invincible_activated"), true);
+            activation = "message.mirrorskills.invincible_activated";
         } else if (SkillData.SKILL_TIPPED_ARROW.equals(skillId)) {
-            if (lastTime != 0 && currentTime - lastTime < 6000) {
-                long remainingSeconds = (6000 - (currentTime - lastTime)) / 20;
-                player.sendSystemMessage(Component.translatable("message.mirrorskills.cooldown", remainingSeconds), true);
-                return;
-            }
+            if (onCooldown(player, currentTime, lastTime, 6000)) return;
 
             giveRandomTippedArrows(player);
-            data = data.copy();
-            data.setCooldown(SkillData.SKILL_TIPPED_ARROW, currentTime);
-            ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
-            player.sendSystemMessage(Component.translatable("message.mirrorskills.tipped_arrow_activated"), true);
-        }
+            activation = "message.mirrorskills.tipped_arrow_activated";
+        } else return;
+        data = data.copy();
+        if (SkillData.SKILL_INVINCIBLE.equals(skillId)) data.setParameter("invincible_ticks", 100.0f);
+        data.setCooldown(skillId, currentTime);
+        ((AttachmentTarget) player).setAttached(MirrorSkills.SKILL_DATA, data);
+        if (activation != null) player.sendSystemMessage(Component.translatable(activation), true);
+    }
+
+    private static boolean onCooldown(ServerPlayer player, long currentTime, long lastTime, long cooldown) {
+        if (lastTime == 0 || currentTime - lastTime >= cooldown) return false;
+        player.sendSystemMessage(Component.translatable("message.mirrorskills.cooldown",
+                (cooldown - (currentTime - lastTime)) / 20), true);
+        return true;
     }
 
     private static void giveRandomTippedArrows(ServerPlayer player) {

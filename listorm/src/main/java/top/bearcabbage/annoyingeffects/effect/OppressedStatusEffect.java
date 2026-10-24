@@ -2,13 +2,8 @@ package top.bearcabbage.annoyingeffects.effect;
 
 import net.minecraft.world.entity.LivingEntity;
 
-public class OppressedStatusEffect extends AnnoyingStatusEffect {
+public class OppressedStatusEffect extends TickingAnnoyingStatusEffect {
   public static final float PITCH = 18.0F;
-
-  @Override
-  public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
-    return true;
-  }
 
   @Override
   public boolean applyEffectTick(

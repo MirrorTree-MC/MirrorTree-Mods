@@ -1,8 +1,8 @@
 import json
-from pathlib import Path
 import tempfile
 import time
 import unittest
+from pathlib import Path
 from zipfile import ZipFile
 
 import publish_update as wizard
@@ -48,6 +48,9 @@ class WizardChecks(unittest.TestCase):
         entries = {x['path']: x for x in result['files']}
         self.assertEqual(entries['mods/new-name.jar']['version'], '2')
         self.assertNotIn('mods/old.jar', entries)
+        self.assertTrue(
+            any('替换旧文件 mods/old.jar' in message for message in self.messages)
+        )
         self.assertIn('mods/unrelated.jar', entries)
         self.assertIn('config/settings.json', entries)
         self.assertIn('config/new.json', entries)
@@ -81,6 +84,9 @@ class WizardChecks(unittest.TestCase):
         app = self.create(['', 'Y'])
         app.retire('example')
         self.assertTrue(app.publish())
+        self.assertTrue(
+            any('停止同步，客户端保留 mods/old.jar' in message for message in self.messages)
+        )
         resumed = self.create(['', 'Y'])
         self.assertFalse(resumed.publish())  # Unchanged snapshot does not create a new release.
         new_config = self.base / 'new.json'

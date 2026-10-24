@@ -19,59 +19,28 @@ public final class AnnoyingEffects {
       new ConfigReadAndWrite(
           FabricLoader.getInstance().getConfigDir().resolve("AnnoyingEffects.json"));
   public static final Holder<MobEffect> ANOREXIA =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "anorexia"),
-          new AnnoyingStatusEffect());
+      register("anorexia", new AnnoyingStatusEffect());
   public static final Holder<MobEffect> CARROT_CURSE =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "carrot_curse"),
-          new CarrotCurseStatusEffect());
+      register("carrot_curse", new CarrotCurseStatusEffect());
   public static final Holder<MobEffect> CHANNELING =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "channeling"),
-          new ChannelingStatusEffect());
+      register("channeling", new ChannelingStatusEffect());
   public static final Holder<MobEffect> CHAOTIC_EXPLOSION =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "chaotic_explosion"),
-          new ChaoticExplosionStatusEffect());
+      register("chaotic_explosion", new ChaoticExplosionStatusEffect());
   public static final Holder<MobEffect> CHAOTIC_TELEPORTATION =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "chaotic_teleportation"),
-          new ChaoticTeleportationStatusEffect());
+      register("chaotic_teleportation", new ChaoticTeleportationStatusEffect());
   public static final Holder<MobEffect> CONTROLS_ALWAYS_DIG =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "controls_always_dig"),
-          new ControlsAlwaysDigStatusEffect());
+      register("controls_always_dig", new ControlsAlwaysDigStatusEffect());
   public static final Holder<MobEffect> CONTROLS_ALWAYS_JUMP =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "controls_always_jump"),
-          new AnnoyingStatusEffect());
+      register("controls_always_jump", new AnnoyingStatusEffect());
   public static final Holder<MobEffect> CONTROLS_CHAOTIC_USE =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "controls_chaotic_use"),
-          new AnnoyingStatusEffect());
+      register("controls_chaotic_use", new AnnoyingStatusEffect());
   public static final Holder<MobEffect> CONTROLS_CRAB =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "controls_crab"),
-          new AnnoyingStatusEffect());
+      register("controls_crab", new AnnoyingStatusEffect());
   public static final Holder<MobEffect> CONTROLS_MIRROR =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "controls_mirror"),
-          new AnnoyingStatusEffect());
+      register("controls_mirror", new AnnoyingStatusEffect());
   public static final Holder<MobEffect> CONTROLS_SHORT_REACH =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "controls_short_reach"),
+      register(
+          "controls_short_reach",
           new AnnoyingStatusEffect()
               .addAttributeModifier(
                   Attributes.BLOCK_INTERACTION_RANGE,
@@ -84,44 +53,22 @@ public final class AnnoyingEffects {
                   -1.0F,
                   AttributeModifier.Operation.ADD_VALUE));
   public static final Holder<MobEffect> CRAWLER =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "crawler"),
-          new CrawlerStatusEffect());
+      register("crawler", new CrawlerStatusEffect());
   public static final Holder<MobEffect> CREEPERPHOBIA =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "creeperphobia"),
-          new CreeperphobiaStatusEffect());
+      register("creeperphobia", new CreeperphobiaStatusEffect());
   public static final Holder<MobEffect> CURSE_OF_VANISHING =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "curse_of_vanishing"),
-          new AnnoyingStatusEffect());
+      register("curse_of_vanishing", new AnnoyingStatusEffect());
   public static final Holder<MobEffect> DISABLE_CRAFTING_TABLE =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "disable_crafting_table"),
-          new AnnoyingStatusEffect());
+      register("disable_crafting_table", new AnnoyingStatusEffect());
   public static final Holder<MobEffect> DISABLE_INVENTORY =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "disable_inventory"),
-          new AnnoyingStatusEffect());
+      register("disable_inventory", new AnnoyingStatusEffect());
   public static final Holder<MobEffect> DISABLE_SLEEPING =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "disable_sleeping"),
-          new DisableSleepingStatusEffect());
+      register("disable_sleeping", new DisableSleepingStatusEffect());
   public static final Holder<MobEffect> ENDERMAN_HOSTILE =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "enderman_hostile"),
-          new EndermanHostileStatusEffect());
+      register("enderman_hostile", new EndermanHostileStatusEffect());
   public static final Holder<MobEffect> HEAVINESS =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "heaviness"),
+      register(
+          "heaviness",
           new AnnoyingStatusEffect()
               .addAttributeModifier(
                   Attributes.SAFE_FALL_DISTANCE,
@@ -139,177 +86,96 @@ public final class AnnoyingEffects {
                   1.0F,
                   AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
   public static final Holder<MobEffect> HORSELESS =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "horseless"),
-          new HorselessStatusEffect());
+      register("horseless", new HorselessStatusEffect());
   public static final Holder<MobEffect> MISFORTUNE =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "misfortune"),
-          new AnnoyingStatusEffect());
+      register("misfortune", new AnnoyingStatusEffect());
   public static final Holder<MobEffect> OPPRESSED =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "oppressed"),
-          new OppressedStatusEffect());
+      register("oppressed", new OppressedStatusEffect());
   public static final Holder<MobEffect> REALLY_COLD =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "really_cold"),
-          new ReallyColdStatusEffect());
+      register("really_cold", new ReallyColdStatusEffect());
   public static final Holder<MobEffect> REALLY_HOT =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "really_hot"),
-          new ReallyHotStatusEffect());
+      register("really_hot", new ReallyHotStatusEffect());
   public static final Holder<MobEffect> REPEATER =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "repeater"),
-          new AnnoyingStatusEffect());
+      register("repeater", new AnnoyingStatusEffect());
   public static final Holder<MobEffect> SCHIZOPHRENIA =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "schizophrenia"),
-          new SchizophreniaStatusEffect());
+      register("schizophrenia", new SchizophreniaStatusEffect());
   public static final Holder<MobEffect> SLIPPY =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "slippy"),
-          new AnnoyingStatusEffect());
+      register("slippy", new AnnoyingStatusEffect());
   public static final Holder<MobEffect> SPIN =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "spin"),
-          new SpinStatusEffect());
+      register("spin", new SpinStatusEffect());
   public static final Holder<MobEffect> SWAPPING_HANDS =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "swapping_hands"),
-          new SwappingHandsStatusEffect());
+      register("swapping_hands", new SwappingHandsStatusEffect());
   public static final Holder<MobEffect> TANGLING_NIGHTMARE =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "tangling_nightmare"),
-          new TanglingNightmareStatusEffect());
+      register("tangling_nightmare", new TanglingNightmareStatusEffect());
   public static final Holder<MobEffect> TANGLING_DREAMS =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "tangling_dreams"),
-          new TanglingDreamsStatusEffect());
+      register("tangling_dreams", new TanglingDreamsStatusEffect());
   public static final Holder<MobEffect> TARGETED =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "targeted"),
-          new TargetedStatusEffect());
+      register("targeted", new TargetedStatusEffect());
   public static final Holder<MobEffect> VOICELESS =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "voiceless"),
-          new AnnoyingStatusEffect());
+      register("voiceless", new AnnoyingStatusEffect());
   public static final Holder<MobEffect> VULNERABLE =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "vulnerable"),
-          new VulnerableStatusEffect());
+      register("vulnerable", new VulnerableStatusEffect());
   public static final Holder<MobEffect> WATER_FILLING =
-      Registry.registerForHolder(
-          BuiltInRegistries.MOB_EFFECT,
-          Identifier.fromNamespaceAndPath(MOD_ID, "water_filling"),
-          new WaterFillingStatusEffect());
+      register("water_filling", new WaterFillingStatusEffect());
 
   public static final Map<Holder<MobEffect>, Map<String, Integer>> STATUS_EFFECT_MAP =
       new LinkedHashMap<>();
 
   public static void initialize() {
-    loadStatusEffects();
+    configure(ANOREXIA, paraMap(200, 200));
+    configure(CARROT_CURSE, paraMap(60, 1200));
+    configure(CHANNELING, paraMap(20, 100));
+    configure(CHAOTIC_EXPLOSION, paraMap(15, 600, 1));
+    configure(CHAOTIC_TELEPORTATION, paraMap(5, 200));
+    configure(CONTROLS_ALWAYS_DIG, paraMap(30, 300, null, 5, 600, null));
+    configure(CONTROLS_ALWAYS_JUMP, paraMap(30, 300, null, 15, 600, null));
+    configure(CONTROLS_CHAOTIC_USE, paraMap(120, 600, 1, 30, null, 0));
+    configure(CONTROLS_CRAB, paraMap(120, 600));
+    configure(CONTROLS_MIRROR, paraMap(120, 600, null, 30, null, null));
+    configure(CONTROLS_SHORT_REACH, paraMap(120, 600, 1, 30, null, 0));
+    configure(CRAWLER, paraMap(60, 600));
+    configure(CREEPERPHOBIA, paraMap(120, 600, null, 60, null, null));
+    configure(CURSE_OF_VANISHING, paraMap(50, 100, null, 25, null, null));
+    configure(DISABLE_CRAFTING_TABLE, paraMap(60, 600, null, 10, 600, 0));
+    configure(DISABLE_INVENTORY, paraMap(10, 100, null, 10, null, null));
+    configure(DISABLE_SLEEPING, paraMap(120, 600));
+    configure(ENDERMAN_HOSTILE, paraMap(120, 600));
+    configure(HEAVINESS, paraMap(60, 600));
+    configure(HORSELESS, paraMap(5, 300));
+    configure(MISFORTUNE, paraMap(-1, -1));
+    configure(OPPRESSED, paraMap(10, 600, 2, 10, null, 0));
+    configure(REALLY_COLD, paraMap(3, 120));
+    configure(REALLY_HOT, paraMap(3, 120));
+    configure(REPEATER, paraMap(120, 600, null, 60, null, null));
+    configure(SCHIZOPHRENIA, paraMap(-1, -1));
+    configure(SLIPPY, paraMap(120, 600));
+    configure(SPIN, paraMap(5, 300, 4, 3, 600, 2));
+    configure(SWAPPING_HANDS, paraMap(10, 200, null));
+    configure(TARGETED, paraMap(120, 600));
+    configure(VOICELESS, paraMap(120, 600));
+    configure(VULNERABLE, paraMap(120, 600, null, 30, null, null));
+    configure(WATER_FILLING, paraMap(0, 15, null, -1, null, null));
+    configure(BLINDNESS, paraMap(30, 600));
+    configure(DARKNESS, paraMap(30, 300, null, 15, 600, null));
+    configure(HUNGER, paraMap(60, 600, null, 30, 1200, null));
+    configure(INFESTED, paraMap(120, 600));
+    configure(LEVITATION, paraMap(10, 200));
+    configure(MINING_FATIGUE, paraMap(60, 600, null, 30, null, null));
+    configure(NAUSEA, paraMap(10, 200));
+    configure(SLOWNESS, paraMap(60, 600, 1, 30, null, 0));
+    configure(WEAKNESS, paraMap(120, 600, 1, 30, null, 0));
+    configure(WITHER, paraMap(10, 600));
     config.save();
   }
 
-  private static void loadStatusEffects() {
-    STATUS_EFFECT_MAP.put(ANOREXIA, config.getStatusParameters("anorexia", paraMap(200, 200)));
-    STATUS_EFFECT_MAP.put(
-        CARROT_CURSE, config.getStatusParameters("carrot_curse", paraMap(60, 1200)));
-    STATUS_EFFECT_MAP.put(CHANNELING, config.getStatusParameters("channeling", paraMap(20, 100)));
-    STATUS_EFFECT_MAP.put(
-        CHAOTIC_EXPLOSION, config.getStatusParameters("chaotic_explosion", paraMap(15, 600, 1)));
-    STATUS_EFFECT_MAP.put(
-        CHAOTIC_TELEPORTATION,
-        config.getStatusParameters("chaotic_teleportation", paraMap(5, 200)));
-    STATUS_EFFECT_MAP.put(
-        CONTROLS_ALWAYS_DIG,
-        config.getStatusParameters("controls_always_dig", paraMap(30, 300, null, 5, 600, null)));
-    STATUS_EFFECT_MAP.put(
-        CONTROLS_ALWAYS_JUMP,
-        config.getStatusParameters("controls_always_jump", paraMap(30, 300, null, 15, 600, null)));
-    STATUS_EFFECT_MAP.put(
-        CONTROLS_CHAOTIC_USE,
-        config.getStatusParameters("controls_chaotic_use", paraMap(120, 600, 1, 30, null, 0)));
-    STATUS_EFFECT_MAP.put(
-        CONTROLS_CRAB, config.getStatusParameters("controls_crab", paraMap(120, 600)));
-    STATUS_EFFECT_MAP.put(
-        CONTROLS_MIRROR,
-        config.getStatusParameters("controls_mirror", paraMap(120, 600, null, 30, null, null)));
-    STATUS_EFFECT_MAP.put(
-        CONTROLS_SHORT_REACH,
-        config.getStatusParameters("controls_short_reach", paraMap(120, 600, 1, 30, null, 0)));
-    STATUS_EFFECT_MAP.put(CRAWLER, config.getStatusParameters("crawler", paraMap(60, 600)));
-    STATUS_EFFECT_MAP.put(
-        CREEPERPHOBIA,
-        config.getStatusParameters("creeperphobia", paraMap(120, 600, null, 60, null, null)));
-    STATUS_EFFECT_MAP.put(
-        CURSE_OF_VANISHING,
-        config.getStatusParameters("curse_of_vanishing", paraMap(50, 100, null, 25, null, null)));
-    STATUS_EFFECT_MAP.put(
-        DISABLE_CRAFTING_TABLE,
-        config.getStatusParameters("disable_crafting_table", paraMap(60, 600, null, 10, 600, 0)));
-    STATUS_EFFECT_MAP.put(
-        DISABLE_INVENTORY,
-        config.getStatusParameters("disable_inventory", paraMap(10, 100, null, 10, null, null)));
-    STATUS_EFFECT_MAP.put(
-        DISABLE_SLEEPING, config.getStatusParameters("disable_sleeping", paraMap(120, 600)));
-    STATUS_EFFECT_MAP.put(
-        ENDERMAN_HOSTILE, config.getStatusParameters("enderman_hostile", paraMap(120, 600)));
-    STATUS_EFFECT_MAP.put(HEAVINESS, config.getStatusParameters("heaviness", paraMap(60, 600)));
-    STATUS_EFFECT_MAP.put(HORSELESS, config.getStatusParameters("horseless", paraMap(5, 300)));
-    STATUS_EFFECT_MAP.put(MISFORTUNE, config.getStatusParameters("misfortune", paraMap(-1, -1)));
-    STATUS_EFFECT_MAP.put(
-        OPPRESSED, config.getStatusParameters("oppressed", paraMap(10, 600, 2, 10, null, 0)));
-    STATUS_EFFECT_MAP.put(REALLY_COLD, config.getStatusParameters("really_cold", paraMap(3, 120)));
-    STATUS_EFFECT_MAP.put(REALLY_HOT, config.getStatusParameters("really_hot", paraMap(3, 120)));
-    STATUS_EFFECT_MAP.put(
-        REPEATER, config.getStatusParameters("repeater", paraMap(120, 600, null, 60, null, null)));
-    STATUS_EFFECT_MAP.put(
-        SCHIZOPHRENIA, config.getStatusParameters("schizophrenia", paraMap(-1, -1)));
-    STATUS_EFFECT_MAP.put(SLIPPY, config.getStatusParameters("slippy", paraMap(120, 600)));
-    STATUS_EFFECT_MAP.put(SPIN, config.getStatusParameters("spin", paraMap(5, 300, 4, 3, 600, 2)));
-    STATUS_EFFECT_MAP.put(
-        SWAPPING_HANDS, config.getStatusParameters("swapping_hands", paraMap(10, 200, null)));
-    STATUS_EFFECT_MAP.put(TARGETED, config.getStatusParameters("targeted", paraMap(120, 600)));
-    STATUS_EFFECT_MAP.put(VOICELESS, config.getStatusParameters("voiceless", paraMap(120, 600)));
-    STATUS_EFFECT_MAP.put(
-        VULNERABLE,
-        config.getStatusParameters("vulnerable", paraMap(120, 600, null, 30, null, null)));
-    STATUS_EFFECT_MAP.put(
-        WATER_FILLING,
-        config.getStatusParameters("water_filling", paraMap(0, 15, null, -1, null, null)));
-    STATUS_EFFECT_MAP.put(BLINDNESS, config.getStatusParameters("blindness", paraMap(30, 600)));
-    STATUS_EFFECT_MAP.put(
-        DARKNESS, config.getStatusParameters("darkness", paraMap(30, 300, null, 15, 600, null)));
-    STATUS_EFFECT_MAP.put(
-        HUNGER, config.getStatusParameters("hunger", paraMap(60, 600, null, 30, 1200, null)));
-    STATUS_EFFECT_MAP.put(INFESTED, config.getStatusParameters("infested", paraMap(120, 600)));
-    STATUS_EFFECT_MAP.put(LEVITATION, config.getStatusParameters("levitation", paraMap(10, 200)));
-    STATUS_EFFECT_MAP.put(
-        MINING_FATIGUE,
-        config.getStatusParameters("mining_fatigue", paraMap(60, 600, null, 30, null, null)));
-    STATUS_EFFECT_MAP.put(NAUSEA, config.getStatusParameters("nausea", paraMap(10, 200)));
-    STATUS_EFFECT_MAP.put(
-        SLOWNESS, config.getStatusParameters("slowness", paraMap(60, 600, 1, 30, null, 0)));
-    STATUS_EFFECT_MAP.put(
-        WEAKNESS, config.getStatusParameters("weakness", paraMap(120, 600, 1, 30, null, 0)));
-    STATUS_EFFECT_MAP.put(WITHER, config.getStatusParameters("wither", paraMap(10, 600)));
+  private static Holder<MobEffect> register(String name, MobEffect effect) {
+    return Registry.registerForHolder(
+        BuiltInRegistries.MOB_EFFECT, Identifier.fromNamespaceAndPath(MOD_ID, name), effect);
+  }
+
+  private static void configure(Holder<MobEffect> effect, Map<String, Integer> defaults) {
+    String name = BuiltInRegistries.MOB_EFFECT.getKey(effect.value()).getPath();
+    STATUS_EFFECT_MAP.put(effect, config.getStatusParameters(name, defaults));
   }
 
   private static Map<String, Integer> paraMap(Integer duration, Integer interval) {

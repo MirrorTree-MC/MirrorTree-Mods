@@ -68,7 +68,11 @@ public final class UpdaterChecks {
             }
             return;
         }
-        Path root = Files.createTempDirectory("updater-checks-").toRealPath();
+        Path runs = Path.of("build", "run", "updaterChecks").toAbsolutePath();
+        Files.createDirectories(runs);
+        Path work = Files.createTempDirectory(runs, "run-").toRealPath();
+        System.out.println("Updater check artifacts (retained on failure): " + work);
+        Path root = Files.createDirectory(work.resolve("instance"));
         Files.createDirectories(root.resolve("mods"));
         byte[] old = jar("example", "1"), current = jar("example", "2");
         Files.write(root.resolve("mods/old.jar"), old);
@@ -170,7 +174,7 @@ public final class UpdaterChecks {
             rejects(client::check, "reject altered or untrusted signature");
             for (String path : List.of("../escape.jar", "mods/../../escape.jar", "/tmp/mod.jar", "config/modpackupdater.json", "saves/level.dat", "mods\\escape.jar"))
                 rejects(() -> UpdateApplier.target(root, path), "reject protected path " + path);
-            Path outside = Files.createTempDirectory("updater-outside-");
+            Path outside = Files.createDirectory(work.resolve("outside"));
             Files.delete(root.resolve("config/personal.json")); Files.delete(root.resolve("config"));
             Files.createSymbolicLink(root.resolve("config"), outside);
             rejects(() -> UpdateApplier.target(root, "config/test.json"), "reject symlink escape");
@@ -179,7 +183,7 @@ public final class UpdaterChecks {
                     List.of(new UpdateClient.FileEntry("mods/new.jar",sha(current),current.length,"wrong-id","2")),List.of());
             rejects(() -> client.plan(malicious), "never overwrite a different mod at the same filename");
             responses.put("/v1/files/"+sha(current), new byte[current.length]);
-            Path other = Files.createTempDirectory("updater-bad-download-"); Files.createDirectories(other.resolve("mods"));
+            Path other = Files.createDirectory(work.resolve("bad-download")); Files.createDirectories(other.resolve("mods"));
             var otherClient = new UpdateClient(other,url,key);
             rejects(() -> otherClient.stage(otherClient.plan(manifest), ignored -> {}), "corrupt downloads cannot produce a pending update");
             check(!Files.exists(other.resolve(".modpackupdater/pending.properties")), "failed download leaves no applicable plan");
@@ -206,6 +210,10 @@ public final class UpdaterChecks {
             check(UpdateApplier.hash(root.resolve("mods/new.jar")).equals(sha(old)), "interrupted transaction rolls back from journal");
             check(!Files.exists(root.resolve(".modpackupdater/transaction.properties")), "recovery clears transaction marker");
         } finally { server.stop(0); }
+        // Failed checks leave their isolated run for diagnosis; successful runs leave no fixtures.
+        try (var files = Files.walk(work)) {
+            for (Path file : files.sorted(Comparator.reverseOrder()).toList()) Files.delete(file);
+        }
         System.out.println("PASS " + checks + " updater checks");
     }
 }

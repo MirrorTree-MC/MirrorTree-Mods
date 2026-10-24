@@ -5,13 +5,13 @@ import base64
 import hashlib
 import json
 import os
-from pathlib import Path, PurePosixPath
 import re
 import shutil
 import subprocess
 import tempfile
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path, PurePosixPath
 from zipfile import ZipFile
 
 SHA = re.compile(r"[a-f0-9]{64}\Z")

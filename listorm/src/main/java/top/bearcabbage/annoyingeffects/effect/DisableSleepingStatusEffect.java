@@ -8,14 +8,9 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Phantom;
 
-public class DisableSleepingStatusEffect extends AnnoyingStatusEffect {
+public class DisableSleepingStatusEffect extends TickingAnnoyingStatusEffect {
   public static final int AVERAGE_SPAWN_INTERVAL = 300;
   public static final Double HEIGHT = 10.0;
-
-  @Override
-  public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
-    return true;
-  }
 
   @Override
   public boolean applyEffectTick(

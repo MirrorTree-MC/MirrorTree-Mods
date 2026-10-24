@@ -69,7 +69,7 @@ def update(package, target, side, apply=False):
         print(
             f"UPDATE {identifier}: {', '.join(p.name for p in old) or '(new)'} -> {source.name}"
         )
-        changes.append((source, old))
+        changes.append((source, old, checksum))
     if not apply or not changes:
         print(
             "Preview only; stop the instance, then add --apply."
@@ -93,16 +93,16 @@ def update(package, target, side, apply=False):
         prefix=".mod-update-", dir=target.parent
     ) as staging_dir:
         staging = Path(staging_dir)
-        for source, _ in changes:
+        for source, _, checksum in changes:
             shutil.copy2(source, staging / source.name)
-            if digest(staging / source.name) != digest(source):
+            if digest(staging / source.name) != checksum:
                 raise OSError(f"Staged copy failed verification: {source.name}")
         try:
-            for _, old in changes:
+            for _, old, _ in changes:
                 for path in old:
                     path.rename(backup / path.name)
                     moved.append(path)
-            for source, _ in changes:
+            for source, _, _ in changes:
                 destination = target / source.name
                 os.replace(staging / source.name, destination)
                 installed.append(destination)

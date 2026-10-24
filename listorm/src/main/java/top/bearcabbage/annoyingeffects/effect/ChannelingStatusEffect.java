@@ -6,17 +6,11 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
 
-public class ChannelingStatusEffect extends AnnoyingStatusEffect {
-  @Override
-  public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
-    return true;
-  }
-
+public class ChannelingStatusEffect extends TickingAnnoyingStatusEffect {
   @Override
   public boolean applyEffectTick(
       net.minecraft.server.level.ServerLevel serverLevel, LivingEntity entity, int amplifier) {
-    long random_seed = entity.getRandom().nextLong();
-    RandomSource random = RandomSource.create(random_seed);
+    RandomSource random = RandomSource.create(entity.getRandom().nextLong());
     if (!entity.level().isClientSide() && random.nextInt(20) <= amplifier) {
       ServerLevel world = (ServerLevel) entity.level();
       if (!world.isThundering()) return false;

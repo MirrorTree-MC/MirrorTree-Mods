@@ -2,12 +2,7 @@ package top.bearcabbage.annoyingeffects.effect;
 
 import net.minecraft.world.entity.LivingEntity;
 
-public class ReallyColdStatusEffect extends AnnoyingStatusEffect {
-  @Override
-  public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
-    return true;
-  }
-
+public class ReallyColdStatusEffect extends TickingAnnoyingStatusEffect {
   @Override
   public boolean applyEffectTick(
       net.minecraft.server.level.ServerLevel serverLevel, LivingEntity entity, int amplifier) {
