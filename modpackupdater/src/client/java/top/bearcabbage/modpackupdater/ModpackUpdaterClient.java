@@ -11,6 +11,7 @@ import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
 import top.bearcabbage.modpackupdater.core.*;
@@ -26,7 +27,9 @@ public final class ModpackUpdaterClient implements ClientModInitializer {
     static volatile boolean restartAfterDownload;
     private static volatile boolean restartPrepared;
     private static volatile boolean startupPromptPending;
+    private static volatile boolean restartToastPending;
     private static volatile String restartNotice;
+    private static final SystemToast.SystemToastId RESTART_TOAST = new SystemToast.SystemToastId(8000);
     static UpdateClient updater;
     static ModpackUpdaterConfig config;
     private static boolean helperStarted;
@@ -48,7 +51,7 @@ public final class ModpackUpdaterClient implements ClientModInitializer {
                         Path applied = UpdateApplier.confined(ROOT.toRealPath(), UpdateApplier.STATE + "/applied.properties");
                         String release = Files.exists(applied) ? UpdateApplier.readProperties(applied).getProperty("release", "新版整合包") : "新版整合包";
                         restartNotice = "更新完成，游戏已自动重启：" + release + "。个人额外内容已保留。";
-                        status = restartNotice; startupPromptPending = true;
+                        status = restartNotice; restartToastPending = true;
                     }
                 } catch (Exception e) { fail(e); }
                 if (updater != null) check(true);
@@ -67,9 +70,15 @@ public final class ModpackUpdaterClient implements ClientModInitializer {
                 Screens.getWidgets(screen).add(button);
                 ScreenEvents.afterTick(screen).register(s -> {
                     button.setMessage(Component.literal(label()));
+                    if (restartToastPending && !busy) {
+                        restartToastPending = false;
+                        client.getToastManager().addToast(SystemToast.multiline(client, RESTART_TOAST,
+                                Component.literal("整合包更新完成"), Component.literal("游戏已自动重启，个人额外内容已保留。")));
+                    }
                     if (startupPromptPending && client.screen == screen && client.level == null && !busy) {
                         startupPromptPending = false;
-                        client.setScreen(new UpdateScreen(screen));
+                        if (pending() || plan != null && plan.changeCount() > 0)
+                            client.setScreen(new UpdateScreen(screen));
                     }
                 });
             }
@@ -104,7 +113,7 @@ public final class ModpackUpdaterClient implements ClientModInitializer {
                     status = plan.changeCount() == 0 ? restartNotice == null ? "已经是最新版本" : restartNotice
                             : "发现 " + plan.changeCount() + " 项更新 · " + plan.manifest().release();
                 }
-                if (startup && (pending() || plan != null && plan.changeCount() > 0)) startupPromptPending = true;
+                if (startup) startupPromptPending = pending() || plan != null && plan.changeCount() > 0;
             } catch (Exception e) {
                 plan = null; fail(e);
                 if (restartNotice != null) status = restartNotice + " 暂时无法检查后续版本，可稍后重试。";

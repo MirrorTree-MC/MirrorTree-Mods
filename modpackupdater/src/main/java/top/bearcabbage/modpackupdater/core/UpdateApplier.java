@@ -105,6 +105,39 @@ public final class UpdateApplier {
 
     private static boolean validHash(String hash) { return hash != null && (hash.equals("-") || hash.matches("[a-f0-9]{64}")); }
 
+    /** Last delivered server content, independent of mods rewriting their live configuration. */
+    public static Properties configReceipts(Path root) throws IOException {
+        Path file = confined(root, STATE + "/config-deliveries.properties");
+        Properties receipts = Files.exists(file) ? readProperties(file) : new Properties();
+        for (String path : receipts.stringPropertyNames()) {
+            if (path.equals("_applied")) continue;
+            target(root, path);
+            if (!path.startsWith("config/") || !receipts.getProperty(path).matches("[a-f0-9]{64}"))
+                throw new IOException("Invalid configuration delivery receipt");
+        }
+        // Also migrates 3.1.0 installations. An in-flight transaction is not proof of delivery.
+        Path applied = confined(root, STATE + "/applied.properties");
+        if (!Files.exists(confined(root, STATE + "/transaction.properties")) && Files.exists(applied)) {
+            Properties plan = readProperties(applied);
+            String transaction = plan.getProperty("backup", "");
+            if (transaction.isEmpty()) throw new IOException("Missing applied transaction identity");
+            if (!transaction.equals(receipts.getProperty("_applied"))) {
+                for (Change c : changes(root, plan)) if (c.path().startsWith("config/")) {
+                    if (c.newHash().equals("-")) receipts.remove(c.path());
+                    else receipts.setProperty(c.path(), c.newHash());
+                }
+                receipts.setProperty("_applied", transaction);
+            }
+        }
+        return receipts;
+    }
+
+    public static void rememberConfigs(Path root, Properties receipts) throws IOException {
+        if (Files.exists(confined(root, STATE + "/transaction.properties"))) return;
+        Path file = confined(root, STATE + "/config-deliveries.properties");
+        if (!Files.exists(file) || !readProperties(file).equals(receipts)) writeProperties(file, receipts);
+    }
+
     public static void apply(Path directory) throws IOException {
         Path root = directory.toRealPath();
         Path state = confined(root, STATE);
@@ -129,6 +162,9 @@ public final class UpdateApplier {
                         throw new IOException("Staged file failed verification: " + c.path());
                 }
             }
+            // Preserve earlier successful deliveries before applied.properties is replaced.
+            // New deliveries are imported only after the journal has been cleared successfully.
+            rememberConfigs(root, configReceipts(root));
             String backupName = "mod-update-backups/updater-" + Instant.now().toEpochMilli() + "-" + UUID.randomUUID();
             UpdateProgress.message("Backing up files / 正在备份原文件，玩家额外内容将保留…");
             Path backup = confined(root, backupName);
@@ -191,6 +227,9 @@ public final class UpdateApplier {
             if (c.oldHash().equals("-")) Files.deleteIfExists(file);
             else replace(confined(backup, c.path()), file);
         }
+        Path applied = confined(root, STATE + "/applied.properties");
+        if (Files.exists(applied) && backupName.equals(readProperties(applied).getProperty("backup")))
+            Files.delete(applied); // Never acknowledge files that were subsequently rolled back.
         Files.delete(journal);
         System.out.println("Restored interrupted update from " + backup);
     }

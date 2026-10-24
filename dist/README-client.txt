@@ -24,6 +24,6 @@ world/datapacks/mirrortree-skill-tree 备份移到 datapacks 之外，避免覆�
 完整安装说明、源码与许可证：
 https://github.com/MirrorTree-MC/MirrorTree-Mods
 
-ModpackUpdater 的 serverUrl 与签名公钥由管理员配置。每次启动自动检查，
+ModpackUpdater 的 serverUrl 与签名公钥由管理员配置。每次启动自动检查，无更新时不打开更新页；
 确认「更新并重启」后自动下载、备份、应用并重启，用户额外内容保留。
 更新服务直接托管于自有服务器，配置示例与问答发布向导见源码文档。

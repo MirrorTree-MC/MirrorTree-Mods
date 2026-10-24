@@ -40,6 +40,62 @@ public final class UpdaterChecks {
         p.setProperty("new.0", newHash); p.setProperty("size.0", Long.toString(size)); p.setProperty("stage.0", stage);
         return p;
     }
+    private static void configChecks(Path work, String url, String key, Map<String, byte[]> responses) throws Exception {
+        Path root = Files.createDirectory(work.resolve("rewritten-configs"));
+        var client = new UpdateClient(root, url, key);
+        byte[] first = "# published timestamp\nenabled=true\n".getBytes();
+        byte[] next = "# admin changed setting\nenabled=false\n".getBytes();
+        var entry = new UpdateClient.FileEntry("config/example.properties", sha(first), first.length, null, null);
+        var manifest = new UpdateClient.Manifest(1, "26.1.2", "config-1", 2, List.of(entry), List.of());
+        responses.put("/v1/files/" + sha(first), first);
+        responses.put("/v1/files/" + sha(next), next);
+        check(client.plan(manifest).changeCount() == 1, "missing configuration is downloaded");
+        client.stage(client.plan(manifest), ignored -> {});
+        UpdateApplier.apply(root);
+        Files.writeString(root.resolve(entry.path()), "# regenerated on every launch\nenabled=true\n");
+        // No receipt ledger exists in a 3.1.0 installation; import the committed apply record.
+        Files.delete(root.resolve(".modpackupdater/config-deliveries.properties"));
+        check(client.plan(manifest).changeCount() == 0, "migrate successful 3.1.0 delivery despite regenerated configuration");
+        var changedEntry = new UpdateClient.FileEntry(entry.path(), sha(next), next.length, null, null);
+        var changed = new UpdateClient.Manifest(1, "26.1.2", "config-2", 3, List.of(changedEntry), List.of());
+        check(client.plan(changed).changeCount() == 1, "new server configuration content still updates");
+        client.stage(client.plan(changed), ignored -> {});
+        Files.writeString(root.resolve(entry.path()), "# changed after staging\nenabled=true\n");
+        rejects(() -> UpdateApplier.apply(root), "configuration precondition still guards edits after staging");
+        check(client.plan(changed).changeCount() == 1, "failed application never acknowledges a new configuration");
+        Files.delete(root.resolve(".modpackupdater/pending.properties"));
+        client.stage(client.plan(changed), ignored -> {});
+        UpdateApplier.apply(root);
+        Files.writeString(root.resolve(entry.path()), "# regenerated again\nenabled=false\n");
+        check(new UpdateClient(root, url, key).plan(changed).changeCount() == 0,
+                "second launch accepts installed new configuration after mod rewrites it");
+        Files.delete(root.resolve(entry.path()));
+        check(client.plan(changed).changeCount() == 1, "deleted configuration is restored even with delivery receipt");
+        Files.write(root.resolve(entry.path()), first);
+        check(client.plan(manifest).changeCount() == 0, "exact existing configuration establishes a new baseline");
+        Files.writeString(root.resolve(entry.path()), "# regenerated old setting\nenabled=true\n");
+        check(client.plan(manifest).changeCount() == 0, "old apply record cannot overwrite a newer observed baseline");
+        // A later mod-only update must retain configuration receipts from previous transactions.
+        byte[] mod = jar("receipt_test", "1"); responses.put("/v1/files/" + sha(mod), mod);
+        var modEntry = new UpdateClient.FileEntry("mods/receipt.jar", sha(mod), mod.length, "receipt_test", "1");
+        var withMod = new UpdateClient.Manifest(1, "26.1.2", "mod-only", 4, List.of(entry, modEntry), List.of());
+        client.stage(client.plan(withMod), ignored -> {}); UpdateApplier.apply(root);
+        check(client.plan(withMod).changeCount() == 0, "configuration receipts survive unrelated mod-only updates");
+        Files.write(root.resolve(modEntry.path()), jar("receipt_test", "tampered"));
+        check(client.plan(withMod).changeCount() == 1, "mods retain strict live SHA-256 verification");
+        Path backup = root.resolve("mod-update-backups/updater-config-crash");
+        Files.createDirectories(backup.resolve("config")); Files.write(backup.resolve(entry.path()), first);
+        Files.write(root.resolve(entry.path()), next);
+        var interrupted = plan(entry.path(), sha(first), sha(next), next.length, ".modpackupdater/staging/test/file");
+        interrupted.setProperty("backup", "mod-update-backups/updater-config-crash");
+        UpdateApplier.writeProperties(root.resolve(".modpackupdater/transaction.properties"), interrupted);
+        UpdateApplier.writeProperties(root.resolve(".modpackupdater/applied.properties"), interrupted);
+        check(!sha(next).equals(UpdateApplier.configReceipts(root).getProperty(entry.path())),
+                "in-flight apply record is never treated as successful delivery");
+        UpdateApplier.recover(root);
+        check(client.plan(changed).changeCount() == 1 && !Files.exists(root.resolve(".modpackupdater/applied.properties")),
+                "rollback invalidates premature success record and does not acknowledge rolled back configuration");
+    }
     public static void main(String[] args) throws Exception {
         if (args.length == 1 && args[0].equals("desktop-fallback-probe")) {
             UpdateProgress.open(); UpdateProgress.close();
@@ -107,6 +163,7 @@ public final class UpdaterChecks {
         try {
             String url = "http://127.0.0.1:"+server.getAddress().getPort()+"/";
             var client = new UpdateClient(root, url, key);
+            configChecks(work, url, key, responses);
             var update = client.check();
             check(update.changeCount() == 2 && update.downloads().size() == 1, "replace by mod ID despite renamed JAR");
             client.stage(update, ignored -> {});

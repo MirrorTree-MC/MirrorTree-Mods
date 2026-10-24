@@ -174,6 +174,7 @@ public final class UpdateClient {
 
     public Plan plan(Manifest manifest) throws IOException {
         validate(manifest);
+        Properties configs = UpdateApplier.configReceipts(root);
         Map<String, List<Path>> local = new HashMap<>();
         Path mods = UpdateApplier.confined(root, "mods");
         if (Files.exists(mods)) try (var entries = Files.list(mods)) {
@@ -196,7 +197,12 @@ public final class UpdateClient {
                         throw new IOException("更新路径被其他模组占用: " + file.path());
                 }
                 String hash = UpdateApplier.hash(path);
-                if (!hash.equals(file.sha256())) { old.put(file.path(), hash); downloads.add(file); }
+                boolean config = file.path().startsWith("config/");
+                if (hash.equals(file.sha256())) {
+                    if (config) configs.setProperty(file.path(), file.sha256());
+                } else if (!config || !file.sha256().equals(configs.getProperty(file.path()))) {
+                    old.put(file.path(), hash); downloads.add(file);
+                }
             } else downloads.add(file);
             if (file.modId() != null) for (Path prior : local.getOrDefault(file.modId(), List.of())) {
                 String relative = root.relativize(prior).toString().replace('\\', '/');
@@ -209,6 +215,7 @@ public final class UpdateClient {
         // The release is an additive requirement, not a mirror of the whole instance.
         // Legacy removeModIds are intentionally ignored. Only obsolete filenames of
         // a mod ID still present in this release may be replaced above.
+        UpdateApplier.rememberConfigs(root, configs);
         return new Plan(manifest, List.copyOf(downloads), Map.copyOf(old));
     }
 
