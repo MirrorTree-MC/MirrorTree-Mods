@@ -1,5 +1,5 @@
 group = 'top.bearcabbage'
-version = '6.1.1+26.1.2'
+version = '6.1.2+26.1.2'
 base { archivesName = 'mirrortree' }
 
 loom {

@@ -45,16 +45,23 @@ public class MirrorTree implements ModInitializer {
      top.bearcabbage.mirrortree.dream.MTDream.enter(serverPlayer,hit.getBlockPos());
     return InteractionResult.SUCCESS;
    }
-   if(!player.isCreative() && !(block instanceof net.minecraft.world.level.block.DoorBlock
+   if(!player.isCreative() && !BedroomInteractions.allowsBlock(block)
+     && !BedroomInteractions.isSurvivalShopItem(player.getItemInHand(hand))
+     && !(block instanceof net.minecraft.world.level.block.DoorBlock
      || block instanceof net.minecraft.world.level.block.GrassBlock
      || block instanceof net.minecraft.world.level.block.LecternBlock
      || block instanceof net.minecraft.world.level.block.StairBlock)) return InteractionResult.FAIL;
    return InteractionResult.PASS;
   });
-  UseEntityCallback.EVENT.register((player,world,hand,entity,hit)->world.dimension().equals(bedroom)&&!player.isCreative()&&!(entity instanceof Villager)?InteractionResult.FAIL:InteractionResult.PASS);
+  UseEntityCallback.EVENT.register((player,world,hand,entity,hit)->world.dimension().equals(bedroom)&&!player.isCreative()
+    && !(entity instanceof Villager) && !BedroomInteractions.allowsEntity(entity.getType())
+    ? InteractionResult.FAIL : InteractionResult.PASS);
   AttackEntityCallback.EVENT.register((player,world,hand,entity,hit)->world.dimension().equals(bedroom)&&!player.isCreative()?InteractionResult.FAIL:InteractionResult.PASS);
   AttackBlockCallback.EVENT.register((player,world,hand,pos,direction)->{
-   if(!player.isCreative()&&(world.dimension().equals(bedroom)||(world.dimension().identifier().getNamespace().equals("starry_skies")&&world.getBlockState(pos).is(Blocks.REINFORCED_DEEPSLATE))))return InteractionResult.FAIL;
+   if(!player.isCreative()&&((world.dimension().equals(bedroom)
+     && !BedroomInteractions.isSurvivalShop(world.getBlockState(pos).getBlock()))
+     ||(world.dimension().identifier().getNamespace().equals("starry_skies")
+       &&world.getBlockState(pos).is(Blocks.REINFORCED_DEEPSLATE))))return InteractionResult.FAIL;
    return InteractionResult.PASS;
   });
  }

@@ -55,6 +55,7 @@ public final class RegressionProbe implements ModInitializer {
         });
     }
     private void run(MinecraftServer server) throws Exception {
+        checkBedroomInteractionAllowlist();
         spawn = server.getWorldData().overworldData().getRespawnData();
         var cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(), "dream-probe"), false);
         player = new ServerPlayer(server, server.overworld(), cookie.gameProfile(), cookie.clientInformation());
@@ -176,6 +177,24 @@ public final class RegressionProbe implements ModInitializer {
         var field=MTDream.class.getDeclaredField("SEARCHES");field.setAccessible(true);
         check(((Map<?,?>)field.get(null)).containsKey(player.getUUID()) || player.level()==overworld,
                 "first-dream search queued or completed immediately");
+    }
+    private void checkBedroomInteractionAllowlist() {
+        for (String id : List.of(
+                "numismatic-overhaul:shop", "numismatic-overhaul:inexhaustible_shop",
+                "spudaciousshops:crate_shop", "spudaciousshops:rug_shop_light_gray",
+                "spudaciousshops:shop_window_andesite", "selling-bin:wooden_bin",
+                "universal_shops:trade_block", "universal_shops:admin_trade_block",
+                "kaleidoscope_doll:doll_machine", "kaleidoscope_doll:doll_42",
+                "kaleidoscope_doll:custom_doll", "kaleidoscope_doll:green_doll_gift_box"))
+            check(BedroomInteractions.allowsBlockId(Identifier.parse(id)),
+                    "bedroom right-click allows " + id);
+        for (String id : List.of("minecraft:stone", "minecraft:chest", "spudaciousshops:cushion"))
+            check(!BedroomInteractions.allowsBlockId(Identifier.parse(id)),
+                    "bedroom building protection still blocks " + id);
+        check(BedroomInteractions.allowsEntityId(Identifier.parse("kaleidoscope_doll:doll")),
+                "bedroom right-click allows doll entities");
+        check(!BedroomInteractions.allowsEntityId(Identifier.parse("minecraft:armor_stand")),
+                "bedroom still blocks unrelated entities");
     }
     private void checkBedroomDrops(ServerLevel bedroom) {
         var nearby = AABB.ofSize(player.position(), 32, 32, 32);
