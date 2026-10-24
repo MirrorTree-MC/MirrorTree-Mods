@@ -1,12 +1,13 @@
 # 源码来源与许可
 
-仓库保留三个模块的可用 Git 历史，各模块继续使用原 mod ID；仓库名称不是新的游戏注册命名空间。
+仓库保留四个模块的可用 Git 历史，各模块继续使用原 mod ID；仓库名称不是新的游戏注册命名空间。
 
 | 模块 | 来源 | 导入提交 |
 | --- | --- | --- |
 | LIStorm | [BaicaiBear/LIStorm](https://github.com/BaicaiBear/LIStorm) | `ce1b70fdf981ecc2e3fb5c4d9710761c671e3586` |
 | Journey | [BaicaiBear/MirrorTree-Journey](https://github.com/BaicaiBear/MirrorTree-Journey) | `6bd354e5f6dd18778eba06b260dad220db9d64b2` |
 | Sync Sign Notice | 用户提供 ZIP 后建立的本地源码仓库 | `bf066f0048ceccb27884d38c34fb35f3b41a8c40` |
+| ModpackUpdater | [MirrorTree-MC/modpackupdater](https://github.com/MirrorTree-MC/modpackupdater)，包含用户本地未提交的配置/启动改动 | `11a3df3`，完整父历史保留 |
 
 Journey 的 master/server 历史已合并，原 server 提交 `b9bc5b4569e974861841d03e95ce1c636e08e10c` 可追溯。公告模组只有 ZIP 导入后建立的本地历史，未恢复其原上游仓库历史。
 

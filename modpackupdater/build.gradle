@@ -1,0 +1,23 @@
+group = 'top.bearcabbage.modpackupdater'
+version = '3.0.0+26.1.2'
+base { archivesName = 'modpackupdater' }
+
+loom {
+    splitEnvironmentSourceSets()
+    mods {
+        modpackupdater {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
+}
+jar { from('LICENSE') }
+
+tasks.register('updaterChecks', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'top.bearcabbage.modpackupdater.core.UpdaterChecks'
+}
+tasks.named('check') { dependsOn 'updaterChecks' }
+// The standalone checks exercise the actual HTTP and helper JVM, without a test framework.
+tasks.named('test') { enabled = false }

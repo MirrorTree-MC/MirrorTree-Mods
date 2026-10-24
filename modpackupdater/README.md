@@ -1,100 +1,45 @@
-# ModpackUpdater
+# ModpackUpdater · 26.1.2
 
-## Overview
-ModpackUpdater is a Fabric mod designed to strictly synchronize modpack files (mods, resource packs, configuration, etc.) upon the client's startup. It ensures players always have the exact version of the modpack as defined by the creator, automatically updating, adding, or removing files as needed.
+面向 Minecraft 26.1.2 / Fabric / Java 25 的客户端更新器，保留 `modpackupdater` ID 和 `config/modpackupdater.json`。更新文件直接来自管理员自己的服务器固定 HTTP(S) 端口。服务器不需要安装此模组；[独立更新服务](tools/update_host.py)可以和 Minecraft 同机运行，更新发布不需要重启 MC。
 
-## For Players / User Guide
-This mod is intended to be pre-installed in a modpack.
+启动后在后台检查。主菜单右上角「整合包更新」显示可用更新数量，打开后可预览模组名称、版本和下载大小。点击「下载更新」会暂存全部文件并校验；之后点击「退出并应用」，或正常退出游戏，独立更新进程会等待游戏关闭再替换文件。稍等应用完成后重新从启动器打开游戏。网络失败会显示错误并保留当前整合包，可手动重试。
 
-**How it works during gameplay:**
-1.  **Launch**: When you launch the game, the mod automatically connects to a remote update server.
-2.  **Check & Download**: It compares your local files with the server's manifest. If updates are found (new mods, updated configs, removed mods), it downloads/deletes files accordingly.
-3.  **UI Feedback**: You will see a "Checking for updates..." or "Updating..." overlay on your screen.
-4.  **Restart**: Once the update process checks are complete and files are synchronized, if any changes were made, a prompt will ask you to restart the game to apply the changes effectively.
+配置示例：
 
-**Note**: This mod ensures consistency. Valid files that are not in the manifest (e.g., extra mods you added manually) might be deleted if configured so by the modpack creator (specifically for mods folder cleanup).
-
-## For Modpack Creators / Developers
-
-### Architecture
-The update system consists of three main components:
-1.  **Client-side Mod**: `ModpackUpdater` (this mod) runs on the player's client.
-2.  **Update Manifest**: A JSON file (`modpack_update_manifest.json`) hosted online that acts as the source of truth for all file versions/hashes.
-3.  **Generator Tool**: A Python script (`tool/modrinth_get.py`) to automate generating the manifest from Modrinth and manual entries.
-
-### Configuration & Setup
-
-#### 1. Mod Configuration (Config File)
-The update URL is configured via a JSON file.
-
-*   **File**: `config/modpackupdater.json` (created after first launch)
-*   **Content**:
-    ```json
-    {
-      "updateUrl": "https://your-file-server.com/modpack_update_manifest.json"
-    }
-    ```
-
-You can ship this config file with your modpack (in the `overrides/config/` folder) to ensure players have the correct URL out of the box.
-
-If the config file is missing or the URL is not set, the mod will log an error and skip the update check.
-
-#### 2. Generating the Update Manifest
-To manage the files your players receive, you use the `modpack_update_manifest.json`. You can generate this file using the included Python script.
-
-**Prerequisites:**
-- Python 3 installed.
-- Install required libraries: `pip install requests tqdm`
-
-**Step A: Configure Automatic Mod Updates (Modrinth)**
-- Edit `tool/modrinth_get.py`.
-- Update the `slug_list` array with the Modrinth slugs of the mods you want to automatically track and update.
-
-**Step B: Configure Manual Files**
-For files not on Modrinth (e.g., custom configs, specific resource packs, local mods), edit `data/manual_links.json`.
-
-*   **Format Example**:
-    ```json
-    {
-      "files": [
-        {
-          "path": "mods/CustomMod.jar",
-          "url": "https://your-file-server.com/files/CustomMod.jar",
-          "mode": "version",
-          "type": "mod",
-          "version": "1.0.0",
-          "id": "custommod"
-        },
-        {
-          "path": "config/some-config.json",
-          "url": "https://your-file-server.com/files/config.json",
-          "mode": "hash"
-        }
-      ],
-      "delete": [
-        "mods/OldLegacyMod.jar"
-      ]
-    }
-    ```
-    *   `mode`: `version` (uses version string comparison), `hash` (uses SHA-256 hash), or `always` (force download every time).
-
-**Step C: Run the Generator**
-Run the script to fetch latest versions and merge manual links:
-```bash
-python3 tool/modrinth_get.py
+```json
+{
+  "serverUrl": "http://your-server.example:18881/",
+  "trustedPublicKey": "由管理员提供的 Ed25519 DER 公钥，使用 Base64 编码",
+  "checkOnStartup": true
+}
 ```
-This script will output/update `data/modpack_update_manifest.json`.
 
-#### 3. Hosting
-1.  Upload the generated `modpack_update_manifest.json` to your web server / GitHub Release / Cloud Storage.
-2.  Ensure the URL matches what you hardcoded in Step 1.
-3.  Ensure all file URLs referenced in the manifest are publicly accessible.
+主菜单允许手动检查和取消暂存更新。后台检查不会自动下载。旧 `updateUrl` 仅能迁移到具备签名和新协议的服务；旧版未签名云清单不再自动执行。原版本记录文件保留，比较依据改为实际文件 SHA-256，支持相同版本号下的修复以及更新器自身更新。
 
-### Building from Source
-1.  Clone the repository.
-2.  Open in IntelliJ IDEA (recommended).
-3.  Run `genSources` gradle task.
-4.  Run `build` gradle task to compile.
+更新按 Fabric mod ID 定位旧版，即使 JAR 文件名变化也能替换。清单外的额外模组保留；管理员可用 `--remove-mod` 明确退役某个模组。默认只发布 `mods`；需要分发公开配置或资源包时逐项使用 `--extra`。更新器的服务器地址和信任公钥配置受保护。
 
-### Licensing
-This project is licensed under the terms included in the `LICENSE` file.
+替换前的文件保存在实例的 `mod-update-backups/updater-*`；下载和事务日志在 `.modpackupdater/`。若上一次应用中断，独立应用器先恢复备份，再处理待应用计划。应用日志在 `.modpackupdater/apply.log`。无法启动游戏时也可以用 Java 25 手动运行已提取的应用器：
+
+```sh
+java -jar /path/to/instance/.modpackupdater/apply-helper.jar /path/to/instance 0
+```
+
+执行这条恢复命令前关闭该实例；最后的 `0` 表示不等待其他进程。路径/备份损坏或本地文件在下载后变化时，应用器会停止并保留恢复信息。
+
+## 自托管更新服务
+
+需要 Python 3.10+ 和支持 Ed25519 的 OpenSSL 3。以下路径为示例。签名密钥存放在公开目录之外，客户端只分发公钥。
+
+```sh
+python3 tools/update_host.py keygen --key /srv/private/mirrortree-release.pem
+python3 tools/update_host.py publish --source /srv/client-source --root /srv/updates/public --key /srv/private/mirrortree-release.pem --release AnotherAutumn-r1 --sequence 1
+python3 tools/update_host.py serve --root /srv/updates/public --bind 0.0.0.0 --port 18881
+```
+
+`client-source` 是待发布客户端文件的快照，包含其 `mods/`。将服务设置为常驻进程；通过 frps/frpc 部署时，把外部端口转发到业务主机 `18881/TCP`，客户端 `serverUrl` 填写外部地址。`/health` 返回服务状态。
+
+后续修改快照中的模组后，再执行 `publish`，使用更大的 `--sequence` 和新的发布名称。需要回滚时发布旧文件的新序号。示例附加选项：`--extra config/public-settings.json --extra resourcepacks/example.zip --remove-mod retired_mod`。默认跳过源目录中标记为仅服务端的模组，拒绝重复 mod ID。
+
+发布使用不可变内容和原子切换的版本指针。客户端固定公钥验证清单签名、拒绝旧序号回放，并对每个下载校验大小、SHA-256、Fabric ID 和版本。HTTP 可用于固定端口；也支持自行配置的 HTTPS。路径只允许显式的 mods/config/resourcepacks 文件，拒绝符号链接和目录越界。
+
+此模块已包含于仓库客户端发行包；完整安装步骤见[安装说明](../docs/INSTALLATION.md)，源码来源见[UPSTREAM](../docs/UPSTREAM.md)，开发规则见 [AGENTS.md](AGENTS.md)。

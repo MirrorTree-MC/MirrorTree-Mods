@@ -1,10 +1,10 @@
 # 安装与升级
 
-目标为 Minecraft 26.1.2、Java 25、Fabric Loader 0.19.5+。客户端与服务端应使用同一批 LIStorm 和 Journey JAR；Sync Sign Notice 仅装客户端。
+目标为 Minecraft 26.1.2、Java 25、Fabric Loader 0.19.5+。客户端与服务端应使用同一批 LIStorm 和 Journey JAR；Sync Sign Notice 和 ModpackUpdater 仅装客户端。
 
 ## 发行包与依赖
 
-- `MirrorTree-Mods-26.1.2-client.zip`：LIStorm、Journey、Sync Sign Notice。
+- `MirrorTree-Mods-26.1.2-client.zip`：LIStorm、Journey、Sync Sign Notice、ModpackUpdater。
 - `MirrorTree-Mods-26.1.2-server.zip`：LIStorm、Journey。
 
 正式包位于发布产物的 `build/distributions/`，包含 `mods/`、许可说明、版本/依赖清单 `manifest.json`、逐文件 `SHA256SUMS` 和更新脚本。ZIP 自身的校验值见相邻 `.zip.sha256` 或同批 `SHA256SUMS`。不包含配置、世界、玩家数据、数据库凭据或测试模组。
@@ -32,6 +32,10 @@ python update_mods.py --side client --mods "<实例的mods目录>"
 服务端改用 `--side server`。确认目标路径后，关闭目标客户端或通过既有管理方式停服并等待保存，再追加 `--apply` 执行。脚本按 mod ID 识别旧版本，保留无关 JAR，将替换文件备份到 `mods` 同级的 `mod-update-backups`；安装失败会恢复已替换文件。也可停实例后手动备份、移走同 ID 的旧 JAR，再合并新 `mods/`。更新后需要重启。
 
 LIStorm 已合入 AnnoyingEffects、Spirit in Storm 和 MirrorSkills；升级时备份并移走这三个独立旧模组，避免重复注册。不要删除 Pufferfish Skills / Attributes 或其玩家进度。
+
+## 自托管客户端更新
+
+ModpackUpdater 在启动后后台检查，可在主菜单预览并下载更新。下载先验签和校验，正常退出后由独立进程替换，旧文件留存在实例 `mod-update-backups`。客户端需配置自有服务器 URL 与固定签名公钥；公开发行包不包含生产配置或密钥。独立服务、端口转发、发布新版本和恢复命令见 [ModpackUpdater 使用说明](../modpackupdater/README.md)。
 
 ## 默认技能树
 

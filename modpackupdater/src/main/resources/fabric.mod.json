@@ -1,37 +1,33 @@
 {
-	"schemaVersion": 1,
-	"id": "modpackupdater",
-	"version": "${version}",
-	"name": "ModpackUpdater",
-	"description": "A mod for updating modpacks easily.",
-	"authors": [
-		"BaicaiBear",
-        "MirrorTree"
-	],
-	"contact": {
-		"homepage": "https://github.com/MirrorTree-MC",
-		"sources": "https://github.com/MirrorTree-MC/modpackupdater"
-	},
-	"license": "CC0-1.0",
-	"icon": "assets/modpackupdater/icon.png",
-	"environment": "*",
-	"entrypoints": {
-		"main": [
-			"top.bearcabbage.modpackupdater.ModpackUpdater"
-		],
-		"client": [
-			"top.bearcabbage.modpackupdater.ModpackUpdaterClient"
-		]
-	},
-	"mixins": [
-	],
-	"depends": {
-		"fabricloader": ">=0.16.14",
-		"minecraft": "~1.21.1",
-		"java": ">=21",
-		"fabric-api": "*"
-	},
-	"suggests": {
-		"another-mod": "*"
-	}
+  "schemaVersion": 1,
+  "id": "modpackupdater",
+  "version": "${version}",
+  "name": "ModpackUpdater",
+  "description": "Signed, self-hosted modpack updates with staged downloads and updates after game exit.",
+  "authors": [
+    "BaicaiBear",
+    "MirrorTree"
+  ],
+  "contact": {
+    "homepage": "https://github.com/MirrorTree-MC",
+    "sources": "https://github.com/MirrorTree-MC/MirrorTree-Mods/tree/main/modpackupdater"
+  },
+  "license": "CC0-1.0",
+  "icon": "assets/modpackupdater/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "main": [
+      "top.bearcabbage.modpackupdater.ModpackUpdater"
+    ],
+    "client": [
+      "top.bearcabbage.modpackupdater.ModpackUpdaterClient"
+    ]
+  },
+  "mixins": [],
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "~26.1.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
 }

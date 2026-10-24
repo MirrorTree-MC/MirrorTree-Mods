@@ -13,6 +13,7 @@ MODULES = {
     "listorm": "lantern-in-storm-rebirth",
     "journey": "mirrortree",
     "sync-sign-notice": "sync-sign-notice",
+    "modpackupdater": "modpackupdater",
 }
 SIDES = {"client": tuple(MODULES), "server": ("listorm", "journey")}
 

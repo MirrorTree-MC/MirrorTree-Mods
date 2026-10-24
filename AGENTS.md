@@ -13,5 +13,6 @@ Read only the relevant maintenance entry:
 - [LIStorm](listorm/AGENTS.md): lamps, safety, effects, progression and skills.
 - [Journey](journey/AGENTS.md): bedroom/dream travel and the isolated validation probe.
 - [Sync Sign Notice](sync-sign-notice/AGENTS.md): client notices and JDBC/cache behavior.
+- [ModpackUpdater](modpackupdater/AGENTS.md): signed updates, the standalone helper and self-hosted update service.
 - [Distribution tools](tools/AGENTS.md): shared build, packaging, updater and release verification.
 - [Documentation](docs/AGENTS.md): user documentation and preserved source manifests.

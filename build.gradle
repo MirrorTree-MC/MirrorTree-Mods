@@ -34,7 +34,7 @@ subprojects {
     }
 }
 
-def releaseModules = ['listorm', 'journey', 'sync-sign-notice']
+def releaseModules = ['listorm', 'journey', 'sync-sign-notice', 'modpackupdater']
 def artifactIndex = layout.buildDirectory.file('distribution-artifacts.json')
 tasks.register('exportDistributionArtifacts') {
     def jars = releaseModules.collect { project(":${it}").tasks.named('jar') }
@@ -75,5 +75,5 @@ tasks.register('assembleDistribution') {
 }
 tasks.named('assemble') { dependsOn 'assembleDistribution' }
 tasks.named('build') {
-    dependsOn ':listorm:build', ':journey:build', ':sync-sign-notice:build'
+    dependsOn ':listorm:build', ':journey:build', ':sync-sign-notice:build', ':modpackupdater:build'
 }

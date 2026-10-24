@@ -1,6 +1,6 @@
 MirrorTree Mods — Minecraft 26.1.2 客户端包
 
-本包包含 LIStorm、Journey、Sync Sign Notice 三个正式模组。
+本包包含 LIStorm、Journey、Sync Sign Notice、ModpackUpdater 四个正式模组。
 运行环境：Java 25、Minecraft 26.1.2、Fabric Loader 0.19.5+。
 以下依赖须单独安装：
 - Fabric API 0.155.3+26.1.2
@@ -23,3 +23,6 @@ world/datapacks/mirrortree-skill-tree 备份移到 datapacks 之外，避免覆�
 
 完整安装说明、源码与许可证：
 https://github.com/MirrorTree-MC/MirrorTree-Mods
+
+ModpackUpdater 的 serverUrl 与签名公钥由管理员配置。主菜单可检查/下载更新，
+退出游戏后应用并备份旧文件。更新服务直接托管于自有服务器，配置示例见源码文档。
