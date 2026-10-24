@@ -7,19 +7,19 @@ import net.minecraft.network.chat.Component;
 
 final class UpdateScreen extends Screen {
     private final Screen parent;
-    private Button check, download, apply, discard;
+    private Button check, download, apply, discard, back;
     UpdateScreen(Screen parent) { super(Component.literal("整合包更新")); this.parent = parent; }
     @Override protected void init() {
         int y = height - 74;
         check = addRenderableWidget(Button.builder(Component.literal("检查更新"), b -> ModpackUpdaterClient.check())
                 .bounds(width / 2 - 154, y, 100, 20).build());
-        download = addRenderableWidget(Button.builder(Component.literal("下载更新"), b -> ModpackUpdaterClient.download())
+        download = addRenderableWidget(Button.builder(Component.literal("更新并重启"), b -> ModpackUpdaterClient.download())
                 .bounds(width / 2 - 50, y, 100, 20).build());
-        apply = addRenderableWidget(Button.builder(Component.literal("退出并应用"), b -> ModpackUpdaterClient.applyAndQuit())
+        apply = addRenderableWidget(Button.builder(Component.literal("应用并重启"), b -> ModpackUpdaterClient.applyAndRestart())
                 .bounds(width / 2 + 54, y, 100, 20).build());
         discard = addRenderableWidget(Button.builder(Component.literal("取消暂存"), b -> ModpackUpdaterClient.discard())
                 .bounds(width / 2 - 102, y + 25, 100, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("返回"), b -> onClose())
+        back = addRenderableWidget(Button.builder(Component.literal("稍后更新"), b -> onClose())
                 .bounds(width / 2 + 2, y + 25, 100, 20).build());
     }
     @Override public void tick() {
@@ -28,6 +28,7 @@ final class UpdateScreen extends Screen {
         download.active = check.active && plan != null && plan.changeCount() > 0;
         apply.active = !ModpackUpdaterClient.busy && ModpackUpdaterClient.pending() && minecraft.level == null;
         discard.active = !ModpackUpdaterClient.busy && ModpackUpdaterClient.pending();
+        back.active = !ModpackUpdaterClient.restartAfterDownload;
     }
     @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
@@ -48,5 +49,7 @@ final class UpdateScreen extends Screen {
             }
         }
     }
-    @Override public void onClose() { minecraft.setScreen(parent); }
+    @Override public void onClose() {
+        if (!ModpackUpdaterClient.restartAfterDownload) minecraft.setScreen(parent);
+    }
 }

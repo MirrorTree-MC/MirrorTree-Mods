@@ -117,6 +117,7 @@ public final class UpdateApplier {
             Path pending = state.resolve("pending.properties");
             if (!Files.exists(pending)) return;
             Properties plan = readProperties(pending);
+            UpdateProgress.message("Verifying files / 游戏已关闭，正在核对更新文件…");
             List<Change> changes = changes(root, plan);
             for (Change c : changes) {
                 Path file = target(root, c.path());
@@ -129,6 +130,7 @@ public final class UpdateApplier {
                 }
             }
             String backupName = "mod-update-backups/updater-" + Instant.now().toEpochMilli() + "-" + UUID.randomUUID();
+            UpdateProgress.message("Backing up files / 正在备份原文件，玩家额外内容将保留…");
             Path backup = confined(root, backupName);
             for (Change c : changes) if (!c.oldHash().equals("-")) {
                 Path copy = confined(backup, c.path());
@@ -138,6 +140,7 @@ public final class UpdateApplier {
             }
             plan.setProperty("backup", backupName);
             writeProperties(journal, plan); // Written before the first live file changes.
+            UpdateProgress.message("Applying update / 正在应用已验证的更新，请勿关闭此窗口…");
             try {
                 for (Change c : changes) {
                     Path file = target(root, c.path());
@@ -193,13 +196,32 @@ public final class UpdateApplier {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length != 2) throw new IllegalArgumentException("Usage: java -jar apply-helper.jar INSTANCE GAME_PID");
+        if (args.length < 2 || args.length > 3 || args.length == 3 && !args[2].equals("restart"))
+            throw new IllegalArgumentException("Usage: java -jar apply-helper.jar INSTANCE GAME_PID [restart]");
         long pid = Long.parseLong(args[1]);
+        UpdateProgress.open();
+        boolean applied = false;
+        try {
         long deadline = System.nanoTime() + java.time.Duration.ofMinutes(10).toNanos();
         while (pid > 0 && ProcessHandle.of(pid).map(ProcessHandle::isAlive).orElse(false)) {
             if (System.nanoTime() > deadline) throw new IOException("Game is still running; files were not replaced");
             Thread.sleep(500);
         }
         apply(Path.of(args[0]));
+        applied = true;
+        if (args.length == 3) {
+            UpdateProgress.message("Restarting Minecraft / 更新成功，正在重新启动 Minecraft…");
+            Process game = RestartLauncher.start(Path.of(args[0]));
+            RestartLauncher.awaitReady(Path.of(args[0]), game);
+            UpdateProgress.message("Minecraft restarted / 游戏已重新启动，更新完成。");
+        }
+        UpdateProgress.close();
+        } catch (Exception failure) {
+            if (args.length == 3) try { RestartLauncher.discard(Path.of(args[0])); }
+                catch (IOException cleanup) { failure.addSuppressed(cleanup); }
+            UpdateProgress.error(applied ? "Files updated; launch needs attention / 文件已更新，可从启动器重试并查看日志。"
+                    : "Update failed; see apply.log / 更新未完成，已保留恢复信息，请查看日志。");
+            throw failure;
+        }
     }
 }

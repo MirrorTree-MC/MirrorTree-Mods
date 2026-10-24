@@ -8,6 +8,7 @@ import net.fabricmc.loader.api.FabricLoader;
 public final class ModpackUpdaterConfig {
     public String serverUrl = "";
     public String trustedPublicKey = "";
+    /** Legacy field retained for configuration compatibility; every startup now checks. */
     public boolean checkOnStartup = true;
     /** Read for migration only. Old unsigned cloud manifests are never trusted. */
     public String updateUrl;

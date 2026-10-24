@@ -35,7 +35,7 @@ LIStorm 已合入 AnnoyingEffects、Spirit in Storm 和 MirrorSkills；升级时
 
 ## 自托管客户端更新
 
-ModpackUpdater 在启动后后台检查，可在主菜单预览并下载更新。下载先验签和校验，正常退出后由独立进程替换，旧文件留存在实例 `mod-update-backups`。客户端需配置自有服务器 URL 与固定签名公钥；公开发行包不包含生产配置或密钥。独立服务、端口转发、发布新版本和恢复命令见 [ModpackUpdater 使用说明](../modpackupdater/README.md)。
+ModpackUpdater 每次启动后台检查，主菜单自动显示可用更新的确认页。确认「更新并重启」后下载、验签和校验，独立进程等待游戏退出再备份、替换，成功后自动启动游戏；也可稍后更新。旧文件留存在实例 `mod-update-backups`，用户额外内容保留。客户端需配置自有服务器 URL 与固定签名公钥；公开发行包不包含生产配置或密钥。独立服务、问答发布向导、端口转发和恢复命令见 [ModpackUpdater 使用说明](../modpackupdater/README.md)。
 
 ## 默认技能树
 

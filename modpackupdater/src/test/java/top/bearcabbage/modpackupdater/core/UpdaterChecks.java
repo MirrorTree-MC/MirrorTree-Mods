@@ -12,6 +12,7 @@ import java.util.zip.*;
 
 public final class UpdaterChecks {
     private static int checks;
+    private static final String RESTART_ARGUMENT = "argument with spaces and \"quotes\" C:\\Users\\玩家 Name\\mods\\";
     private static void check(boolean value, String description) {
         if (!value) throw new AssertionError(description);
         checks++; System.out.println("PASS " + description);
@@ -40,6 +41,18 @@ public final class UpdaterChecks {
         return p;
     }
     public static void main(String[] args) throws Exception {
+        if (args.length == 1 && args[0].equals("desktop-fallback-probe")) {
+            UpdateProgress.open(); UpdateProgress.close();
+            System.out.println("PASS desktop unavailability does not prevent updating"); return;
+        }
+        if (args.length == 4 && args[0].equals("restart-probe")) {
+            Path instance = Path.of(args[1]);
+            if (!UpdateApplier.hash(instance.resolve("mods/new.jar")).equals(args[2])
+                    || !args[3].equals(RESTART_ARGUMENT)) throw new AssertionError("Restarted before verified application or arguments corrupted");
+            Files.writeString(instance.resolve("restart-test.marker"), "verified updated files and exact arguments");
+            RestartLauncher.ready(instance);
+            return;
+        }
         if (args.length == 1 && args[0].equals("wait-target")) { Thread.sleep(2000); return; }
         if (args.length == 3 || args.length == 4) {
             var client = new UpdateClient(Path.of(args[0]), args[1], args[2]);
@@ -94,27 +107,47 @@ public final class UpdaterChecks {
             check(update.changeCount() == 2 && update.downloads().size() == 1, "replace by mod ID despite renamed JAR");
             client.stage(update, ignored -> {});
             check(Files.exists(root.resolve("mods/old.jar")) && !Files.exists(root.resolve("mods/new.jar")), "downloads do not change loaded mods");
-            // Use only the JDK and the two helper class files in a fresh JVM.
+            // Use only the JDK and the four helper class files in a fresh JVM.
             Path helper = root.resolve("helper.jar");
             var meta = new Manifest(); meta.getMainAttributes().putValue("Manifest-Version", "1.0");
             meta.getMainAttributes().putValue("Main-Class", UpdateApplier.class.getName());
             try (var out = new JarOutputStream(Files.newOutputStream(helper), meta)) {
-                for (String name : List.of("UpdateApplier", "UpdateApplier$Change")) {
+                for (String name : List.of("UpdateApplier", "UpdateApplier$Change", "RestartLauncher", "UpdateProgress")) {
                     String resource = "top/bearcabbage/modpackupdater/core/"+name+".class";
                     out.putNextEntry(new JarEntry(resource));
                     try (var in = UpdateApplier.class.getClassLoader().getResourceAsStream(resource)) { in.transferTo(out); }
                     out.closeEntry();
                 }
             }
-            String java = Path.of(System.getProperty("java.home"), "bin", "java").toString();
-            var game = new ProcessBuilder(java, "-cp", System.getProperty("java.class.path"),
+            String javaExecutable = Path.of(System.getProperty("java.home"), "bin",
+                    System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win") ? "java.exe" : "java").toString();
+            Path nativeDirectory = root.resolve("temporary-natives"); Files.createDirectories(nativeDirectory);
+            Files.write(nativeDirectory.resolve("test.dylib"), new byte[] {9, 8, 7});
+            String previousNativePath = System.getProperty("java.library.path");
+            try {
+                System.setProperty("java.library.path", nativeDirectory.toString());
+                RestartLauncher.prepare(root, new String[] {"--username", "offline-test", "--accessToken", "dummy-not-a-secret"});
+            } finally { System.setProperty("java.library.path", previousNativePath); }
+            Properties recipe = UpdateApplier.readProperties(root.resolve(".modpackupdater/restart.properties"));
+            check(recipe.values().stream().anyMatch(v -> v.toString().startsWith("-Djava.library.path=" + root.resolve(".modpackupdater/restart-natives"))),
+                    "restart preserves launcher native libraries before old process cleanup");
+            if (Files.getFileAttributeView(root, java.nio.file.attribute.PosixFileAttributeView.class) != null)
+                check(Files.getPosixFilePermissions(root.resolve(".modpackupdater/restart.properties"))
+                        .equals(java.nio.file.attribute.PosixFilePermissions.fromString("rw-------")), "restart login arguments are stored owner-only");
+            RestartLauncher.prepareCommand(root, List.of(javaExecutable, "-cp", System.getProperty("java.class.path"),
+                    UpdaterChecks.class.getName(), "restart-probe", root.toString(), sha(current), RESTART_ARGUMENT), Path.of(System.getProperty("user.dir")));
+            var game = new ProcessBuilder(javaExecutable, "-cp", System.getProperty("java.class.path"),
                     UpdaterChecks.class.getName(), "wait-target").start();
-            var applied = new ProcessBuilder(java, "-jar", helper.toString(), root.toString(),
-                    Long.toString(game.pid())).inheritIO().start();
+            var applied = new ProcessBuilder(javaExecutable, "-Djava.awt.headless=true", "-jar", helper.toString(), root.toString(),
+                    Long.toString(game.pid()), "restart").inheritIO().start();
             Thread.sleep(300);
             check(Files.exists(root.resolve("mods/old.jar")) && !Files.exists(root.resolve("mods/new.jar")),
                     "helper waits for the game process to exit before changing files");
             check(applied.waitFor() == 0, "standalone helper works without Fabric, Minecraft or Gson");
+            long restartDeadline = System.nanoTime() + java.time.Duration.ofSeconds(10).toNanos();
+            while (!Files.exists(root.resolve("restart-test.marker")) && System.nanoTime() < restartDeadline) Thread.sleep(20);
+            check(Files.exists(root.resolve("restart-test.marker")), "automatic restart observes verified updated files and preserves argument boundaries");
+            check(!Files.exists(root.resolve(".modpackupdater/restart.properties")), "private restart instructions removed after launch");
             check(Files.readAllBytes(root.resolve("mods/new.jar")).length == current.length && !Files.exists(root.resolve("mods/old.jar")), "new mod replaced old version");
             check(Files.exists(root.resolve("mods/unrelated.jar")), "unmanaged mods preserved");
             for (var file : personalFiles.entrySet())
@@ -154,6 +187,13 @@ public final class UpdaterChecks {
             var changed = plan("mods/new.jar", sha(old), "-",0,"");
             UpdateApplier.writeProperties(root.resolve(".modpackupdater/pending.properties"),changed);
             rejects(() -> UpdateApplier.apply(root), "local changes since staging prevent application");
+            Files.delete(root.resolve("restart-test.marker"));
+            RestartLauncher.prepareCommand(root, List.of(javaExecutable, "-cp", System.getProperty("java.class.path"),
+                    UpdaterChecks.class.getName(), "restart-probe", root.toString(), sha(current), RESTART_ARGUMENT), Path.of(System.getProperty("user.dir")));
+            var failedApply = new ProcessBuilder(javaExecutable, "-Djava.awt.headless=true", "-jar", helper.toString(), root.toString(), "0", "restart")
+                    .redirectErrorStream(true).redirectOutput(root.resolve("expected-apply-failure.log").toFile()).start();
+            check(failedApply.waitFor() != 0 && !Files.exists(root.resolve("restart-test.marker")), "failed application never restarts the game");
+            check(!Files.exists(root.resolve(".modpackupdater/restart.properties")), "failed application discards private restart arguments");
             check(UpdateApplier.hash(root.resolve("mods/new.jar")).equals(sha(current)), "precondition failure preserved live files");
             Files.delete(root.resolve(".modpackupdater/pending.properties"));
             // Simulate process termination after replacing a file but before the transaction completes.
