@@ -3,6 +3,7 @@ package top.bearcabbage.modpackupdater.core;
 import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.*;
@@ -35,7 +36,14 @@ public final class UpdateApplier {
         Path cursor = root;
         for (Path part : rel) {
             cursor = cursor.resolve(part);
-            if (Files.isSymbolicLink(cursor)) throw new IOException("Refusing symlink: " + cursor);
+            try {
+                var attributes = Files.readAttributes(cursor, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+                // Windows junctions are reparse points reported as "other", not symbolic links.
+                if (attributes.isSymbolicLink() || attributes.isOther())
+                    throw new IOException("Refusing link or special file: " + cursor);
+            } catch (NoSuchFileException ignored) {
+                // Staging and backup paths may not exist yet.
+            }
         }
         return target;
     }

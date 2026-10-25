@@ -21,9 +21,11 @@ public final class MirrorSkillsClient {
         var invisible = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.mirrorskills.invisible", GLFW.GLFW_KEY_I, category));
         var dash = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.mirrorskills.dash", GLFW.GLFW_KEY_O, category));
         var invincible = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.mirrorskills.invincible", GLFW.GLFW_KEY_GRAVE_ACCENT, category));
+        var tippedArrow = KeyMappingHelper.registerKeyMapping(new KeyMapping("key.mirrorskills.tipped_arrow", GLFW.GLFW_KEY_J, category));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null || !ClientPlayNetworking.canSend(ModNetworking.TRIGGER_SKILL_ID)) return;
             while (invisible.consumeClick()) ClientPlayNetworking.send(new ModNetworking.TriggerSkillPayload(SkillData.SKILL_INVISIBILITY));
+            while (tippedArrow.consumeClick()) ClientPlayNetworking.send(new ModNetworking.TriggerSkillPayload(SkillData.SKILL_TIPPED_ARROW));
             while (dash.consumeClick()) ClientPlayNetworking.send(new ModNetworking.TriggerSkillPayload(SkillData.SKILL_DASHING));
             while (invincible.consumeClick()) ClientPlayNetworking.send(new ModNetworking.TriggerSkillPayload(SkillData.SKILL_INVINCIBLE));
         });

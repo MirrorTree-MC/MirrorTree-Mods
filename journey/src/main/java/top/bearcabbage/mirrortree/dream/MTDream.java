@@ -7,6 +7,7 @@ import java.util.concurrent.CompletableFuture;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityLevelChangeEvents;
+import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -85,6 +86,14 @@ public final class MTDream {
             else if (origin.dimension().equals(MirrorTree.bedroom) && player.gameMode() == GameType.ADVENTURE)
                 player.setGameMode(GameType.SURVIVAL);
         });
+        ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, player, alive) -> {
+            if (alive || !oldPlayer.level().dimension().equals(MirrorTree.bedroom)) return;
+            SEARCHES.remove(player.getUUID());
+            try { DreamStore.discard(player); }
+            catch (java.io.IOException e) {
+                MirrorTree.LOGGER.error("Cannot discard dream after death for {}", player.getUUID(), e);
+            }
+        });
         ServerTickEvents.END_SERVER_TICK.register(MTDream::tick);
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> SEARCHES.remove(handler.player.getUUID()));
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
@@ -112,9 +121,6 @@ public final class MTDream {
                 if (player.teleportTo(destination, safe.getX() + .5, safe.getY(), safe.getZ() + .5,
                         Set.of(), snapshot.yaw, snapshot.pitch, false)) {
                     if (player.gameMode() == GameType.ADVENTURE) player.setGameMode(GameType.SURVIVAL);
-                    snapshot.restore(player);
-                    snapshot.inBedroom = false;
-                    DreamStore.save(player, snapshot);
                     player.sendSystemMessage(Component.literal("你回到了梦中。"));
                 }
             } else {
@@ -123,6 +129,47 @@ public final class MTDream {
         } catch (Exception e) {
             MirrorTree.LOGGER.error("Cannot enter dream for {}", player.getUUID(), e);
             player.sendSystemMessage(Component.literal("入梦数据读取失败，原记录已保留，请联系管理员。"));
+        }
+    }
+
+    /** Shared by command, bed and portal travel through ServerPlayer.teleport. */
+    public static ServerPlayer teleport(ServerPlayer player, ServerLevel destination,
+            java.util.function.Supplier<ServerPlayer> teleport) {
+        boolean leaving = player.level().dimension().equals(MirrorTree.bedroom);
+        boolean entering = destination.dimension().equals(MirrorTree.bedroom);
+        if (leaving == entering) return teleport.get();
+        DreamStore.Snapshot snapshot;
+        Runnable restore = null;
+        try {
+            // Also settle a previously interrupted return before allowing bedroom re-entry.
+            snapshot = DreamStore.load(player);
+            if (leaving && snapshot.inBedroom) {
+                restore = snapshot.prepareRestore(player);
+                snapshot.inBedroom = false;
+                snapshot.returning = true;
+                DreamStore.save(player, snapshot);
+            }
+        } catch (Exception error) {
+            MirrorTree.LOGGER.error("Cannot prepare bedroom travel for {}", player.getUUID(), error);
+            player.sendSystemMessage(Component.literal("梦境记录校验或保存失败，传送已取消，请联系管理员。"));
+            return null;
+        }
+        if (restore == null) return teleport.get();
+        try {
+            var result = teleport.get();
+            if (result != null) restore.run();
+            return result;
+        } finally {
+            // A rejected teleport leaves the original return available; a completed exit consumes it.
+            // If this write fails, the durable returning flag is resolved before the next crossing.
+            snapshot.inBedroom = player.level().dimension().equals(MirrorTree.bedroom);
+            snapshot.returning = false;
+            try {
+                DreamStore.save(player, snapshot);
+            } catch (Exception error) {
+                MirrorTree.LOGGER.error("Cannot finish bedroom travel for {}", player.getUUID(), error);
+                player.sendSystemMessage(Component.literal("梦境记录保存未完成，下次传送前将重试；请联系管理员。"));
+            }
         }
     }
 
@@ -305,7 +352,7 @@ public final class MTDream {
                 throw new IllegalStateException("Dream candidate chunk did not finish loading");
             var settlement = search.settlement();
             BlockPos candidate = settlement == null
-                    ? new BlockPos(x, world.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z)
+                    ? randomSurface(world, x, z)
                     : nearbySafe(world, settlement.blockPos(), true);
             SEARCHES.remove(pending.player());
             if (candidate != null && safe(world, candidate)) {
@@ -336,6 +383,17 @@ public final class MTDream {
             releaseSearch(world);
         }
         return pending.fast();
+    }
+
+    private static BlockPos randomSurface(ServerLevel world, int x, int z) {
+        int surface = world.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+        // Generation height excludes later structures/features. A heightmap alone also picks
+        // airship decks, rooftops and tree trunks. Allow only two blocks of surface decoration.
+        // This queries the generator, not neighboring chunks, and also permits high mountains.
+        var chunks = world.getChunkSource();
+        int terrain = chunks.getGenerator().getBaseHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG,
+                world, chunks.randomState());
+        return surface <= terrain + 2 ? new BlockPos(x, surface, z) : null;
     }
 
     private static BlockPos randomCandidate(ServerLevel world) {

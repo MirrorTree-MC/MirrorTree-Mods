@@ -22,10 +22,18 @@ public final class SkillsClientGameTest implements FabricClientGameTest {
     long[] cooldown = {0};
     try (var world = context.worldBuilder().create()) {
       save = world.getWorldSave();
+      context.getInput().pressKey(GLFW.GLFW_KEY_J);
+      context.waitTicks(5);
+      world.getServer().runOnServer(server -> check(
+          server.getPlayerList().getPlayers().getFirst().getInventory()
+              .countItem(net.minecraft.world.item.Items.TIPPED_ARROW) == 0,
+          "J cannot grant arrows before skill unlock"));
       world.getServer().runOnServer(server -> {
         var player = server.getPlayerList().getPlayers().getFirst();
         SkillsAPI.getCategory(Identifier.parse("mirrortree:combat")).orElseThrow()
             .getSkill("invincible").orElseThrow().unlock(player);
+        SkillsAPI.getCategory(Identifier.parse("mirrortree:combat")).orElseThrow()
+            .getSkill("free_tipped_arrows").orElseThrow().unlock(player);
         var target = (AttachmentTarget) player;
         var data = target.getAttachedOrCreate(MirrorSkills.SKILL_DATA).copy();
         data.setLastDeathLocation(new Vec3(12.5, 80, -24.5), "mirrortree:bedroom");
@@ -37,6 +45,20 @@ public final class SkillsClientGameTest implements FabricClientGameTest {
           && ((AttachmentTarget) client.player).getAttached(MirrorSkills.SKILL_DATA) != null
           && ((AttachmentTarget) client.player).getAttached(MirrorSkills.SKILL_DATA)
               .isSkillEnabled(SkillData.SKILL_INVINCIBLE));
+      context.waitFor(client -> ((AttachmentTarget) client.player).getAttached(MirrorSkills.SKILL_DATA)
+          .isSkillEnabled(SkillData.SKILL_TIPPED_ARROW));
+      context.getInput().pressKey(GLFW.GLFW_KEY_J);
+      context.waitFor(client -> client.player.getInventory()
+          .countItem(net.minecraft.world.item.Items.TIPPED_ARROW) == 16);
+      context.getInput().pressKey(GLFW.GLFW_KEY_J);
+      context.waitTicks(5);
+      world.getServer().runOnServer(server -> {
+        var player = server.getPlayerList().getPlayers().getFirst();
+        check(player.getInventory().countItem(net.minecraft.world.item.Items.TIPPED_ARROW) == 16,
+            "J grants 16 arrows and repeated input respects cooldown");
+        check(((AttachmentTarget) player).getAttachedOrCreate(MirrorSkills.SKILL_DATA)
+            .getCooldown(SkillData.SKILL_TIPPED_ARROW) > 0, "arrow cooldown is recorded");
+      });
       context.getInput().pressKey(GLFW.GLFW_KEY_GRAVE_ACCENT);
       context.waitFor(client -> ((AttachmentTarget) client.player)
           .getAttached(MirrorSkills.SKILL_DATA).getParameter("invincible_ticks") > 0);

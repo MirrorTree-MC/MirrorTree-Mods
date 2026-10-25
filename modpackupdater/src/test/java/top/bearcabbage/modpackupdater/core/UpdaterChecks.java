@@ -236,6 +236,20 @@ public final class UpdaterChecks {
             Files.createSymbolicLink(root.resolve("config"), outside);
             rejects(() -> UpdateApplier.target(root, "config/test.json"), "reject symlink escape");
             Files.delete(root.resolve("config"));
+            if (System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win")) {
+                Path junction = root.resolve("config");
+                var mklink = new ProcessBuilder("cmd.exe", "/c", "mklink", "/J",
+                        junction.toString(), outside.toString()).redirectErrorStream(true).start();
+                String output = new String(mklink.getInputStream().readAllBytes());
+                check(mklink.waitFor() == 0, "create native junction fixture: " + output.strip());
+                try {
+                    Files.writeString(outside.resolve("test.json"), "personal config");
+                    rejects(() -> UpdateApplier.target(root, "config/test.json"), "reject junction update target");
+                    rejects(() -> UpdateApplier.confined(root, "config/new/staged"), "reject junction staging or backup path");
+                    check(Files.readString(outside.resolve("test.json")).equals("personal config"),
+                            "junction target remains unchanged");
+                } finally { Files.delete(junction); }
+            }
             var malicious = new UpdateClient.Manifest(1,"26.1.2","bad",2,
                     List.of(new UpdateClient.FileEntry("mods/new.jar",sha(current),current.length,"wrong-id","2")),List.of());
             rejects(() -> client.plan(malicious), "never overwrite a different mod at the same filename");

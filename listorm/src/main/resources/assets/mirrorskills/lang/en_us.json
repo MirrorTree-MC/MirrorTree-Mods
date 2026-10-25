@@ -16,6 +16,7 @@
   "command.mirrorskills.death.failed": "Teleport failed. The death location has been retained.",
   "key.mirrorskills.invisible": "Cast Invisibility",
   "key.mirrorskills.dash": "Cast Dashing",
+  "key.mirrorskills.tipped_arrow": "Receive Free Tipped Arrows",
   "key.mirrorskills.invincible": "Activate Invincible State",
   "category.mirrorskills.skills": "MirrorTree Skills",
   "category.mirrorskills.general": "MirrorTree Skills"

@@ -62,7 +62,7 @@ python3 tools/update_host.py serve --root /srv/updates/public --bind 0.0.0.0 --p
 
 后续修改快照中的模组后，再执行 `publish`，使用更大的 `--sequence` 和新的发布名称。需要回滚时发布旧文件的新序号。示例附加选项：`--extra config/public-settings.json --extra resourcepacks/example.zip`。默认跳过源目录中标记为仅服务端的模组，拒绝重复 mod ID。
 
-发布使用不可变内容和原子切换的版本指针。客户端固定公钥验证清单签名、拒绝旧序号回放，并对每个下载校验大小、SHA-256、Fabric ID 和版本。HTTP 可用于固定端口；也支持自行配置的 HTTPS。路径只允许显式的 mods/config/resourcepacks 文件，拒绝符号链接和目录越界。
+发布使用不可变内容和原子切换的版本指针。客户端固定公钥验证清单签名、拒绝旧序号回放，并对每个下载校验大小、SHA-256、Fabric ID 和版本。HTTP 可用于固定端口；也支持自行配置的 HTTPS。路径只允许显式的 mods/config/resourcepacks 文件，拒绝符号链接、Windows Junction 等特殊重解析点和目录越界。
 
 ## 下载和应用过程
 

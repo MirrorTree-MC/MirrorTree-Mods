@@ -66,6 +66,7 @@ public final class RegressionProbe implements ModInitializer {
         ServerLevel stars = server.getLevel(ResourceKey.create(Registries.DIMENSION, Identifier.parse("starry_skies:overworld")));
         check(bedroom != null && stars != null, "production bedroom and Starry Skies dimensions loaded");
         checkBedroomTravel(server, bedroom, stars);
+        top.bearcabbage.mirrortree.dream.DreamTravelRegressionChecks.run(server, this::check);
         player.teleportTo(bedroom, 100.5, 200, 100.5, Set.of(), 0, 0, false);
         player.setGameMode(GameType.SURVIVAL);
         var state = PlayerStore.get(player);

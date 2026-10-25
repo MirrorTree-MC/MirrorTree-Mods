@@ -8,7 +8,7 @@ LIStorm 合并 Lantern in Storm、Spirit in Storm、AnnoyingEffects 和 MirrorSk
 - 护符和手电可佩戴于 Trinkets 的 `offhand/glove` 槽，或持在主手/副手；佩戴物死亡保留。灯旁可充能，电量耗尽保留手电供再次充电。
 - 35 种梦魇效果、累计 HUD 与输入/渲染表现。`config/AnnoyingEffects.json` 首次启动生成，缺项补默认值，修改后重启生效。
 - 食物、首次群系、目标/挑战进度、矿石经验接入 Pufferfish Skills；次数与入梦点保存在世界内 `lantern-in-storm/players/<UUID>.json`。
-- MirrorSkills 主动技能、被动能力和冷却 HUD；内置 Serenia 的战斗树 16 节点、辅助树 42 节点。升级时须处理独立 MirrorSkills JAR 和旧技能树数据包，见[安装说明](../docs/INSTALLATION.md)。
+- MirrorSkills 主动技能、被动能力和冷却 HUD；解锁「免费药箭」后默认按 J 领取 16 支随机药水箭，冷却 5 分钟，按键可在控制设置中修改；内置 Serenia 的战斗树 16 节点、辅助树 42 节点。升级时须处理独立 MirrorSkills JAR 和旧技能树数据包，见[安装说明](../docs/INSTALLATION.md)。
 
 `mirrortree:bedroom` 恒定安全，无需灯具、入梦点或防护装备，不产生环境梦魇、不消耗防护耐久。各维度均可按服务器建造权限放置灯具；Starry Skies 的点亮/防护仍遵循原规则，普通灯不会因此获得神话金属灯的防护。
 

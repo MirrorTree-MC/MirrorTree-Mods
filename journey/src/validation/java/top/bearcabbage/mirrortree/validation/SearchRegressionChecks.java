@@ -15,6 +15,7 @@ import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.levelgen.Heightmap;
 import top.bearcabbage.mirrortree.dream.MTDream;
 
 /** Destructive search checks, called only from the isolated validation probe. */
@@ -93,11 +94,41 @@ final class SearchRegressionChecks {
                         "rejected coordinate sampling stops after 128 pairs");
             } finally { randomField.set(world, random); }
 
-            // One real loaded column makes queue outcomes deterministic without waiting on generation.
+            // Keep the deterministic queue fixture on generated terrain, not a floating platform.
             border.setCenter(256.5,256.5); border.setSize(1);
-            world.setBlockAndUpdate(new BlockPos(256,199,256), Blocks.STONE.defaultBlockState());
-            world.setBlockAndUpdate(new BlockPos(256,200,256), Blocks.AIR.defaultBlockState());
-            world.setBlockAndUpdate(new BlockPos(256,201,256), Blocks.AIR.defaultBlockState());
+            int groundY = world.getChunkSource().getGenerator().getBaseHeight(256,256,
+                    Heightmap.Types.OCEAN_FLOOR_WG,world,world.getChunkSource().randomState());
+            for (int y=groundY; y<world.getMaxY(); y++)
+                world.setBlockAndUpdate(new BlockPos(256,y,256), Blocks.AIR.defaultBlockState());
+            world.setBlockAndUpdate(new BlockPos(256,groundY-1,256), Blocks.STONE.defaultBlockState());
+            var surface = MTDream.class.getDeclaredMethod("randomSurface",ServerLevel.class,int.class,int.class);
+            surface.setAccessible(true);
+            check.accept(new BlockPos(256,groundY,256).equals(surface.invoke(null,world,256,256)),
+                    "random dream accepts the generated ground surface");
+            var deck = new BlockPos(256,groundY+40,256);
+            world.setBlockAndUpdate(deck,Blocks.SPRUCE_PLANKS.defaultBlockState());
+            var safe = MTDream.class.getDeclaredMethod("safe",ServerLevel.class,BlockPos.class); safe.setAccessible(true);
+            check.accept((boolean)safe.invoke(null,world,deck.above())
+                    && world.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,256,256)==deck.getY()+1,
+                    "old heightmap and standing checks accept a floating ship deck");
+            check.accept(surface.invoke(null,world,256,256)==null,
+                    "random dream rejects the floating ship deck above generated terrain");
+            world.setBlockAndUpdate(deck,Blocks.GRASS_BLOCK.defaultBlockState());
+            for (int depth=1;depth<=12;depth++) world.setBlockAndUpdate(deck.below(depth),Blocks.STONE.defaultBlockState());
+            check.accept(surface.invoke(null,world,256,256)==null,
+                    "thick stone and grass floating islands are also rejected");
+            queue(server,bed,player);
+            pending.set(null,constructor.newInstance(player.getUUID(), searches.get(player.getUUID()),
+                    256,256,System.nanoTime(),CompletableFuture.completedFuture(null),false));
+            nextTick(tick,server);
+            check.accept(player.level()==bedroom && searches.containsKey(player.getUUID()) && !hasTicket.getAsBoolean(),
+                    "a sky structure stays in the bounded retry path without teleporting the player");
+            release.invoke(null,world); searches.clear();
+            for (int depth=0;depth<=12;depth++) world.setBlockAndUpdate(deck.below(depth),Blocks.AIR.defaultBlockState());
+            world.setBlockAndUpdate(new BlockPos(256,groundY+1,256),Blocks.STONE.defaultBlockState());
+            check.accept(new BlockPos(256,groundY+2,256).equals(surface.invoke(null,world,256,256)),
+                    "small surface height variation remains eligible");
+            world.setBlockAndUpdate(new BlockPos(256,groundY+1,256),Blocks.AIR.defaultBlockState());
             queue(server,bed,player,second);
             var future = new CompletableFuture<>();
             Object waiting = constructor.newInstance(player.getUUID(), searches.get(player.getUUID()),
@@ -133,7 +164,7 @@ final class SearchRegressionChecks {
                     "spectator during fast loading is cancelled and its ticket is released");
 
             player.setGameMode(GameType.ADVENTURE);
-            world.setBlockAndUpdate(new BlockPos(256,199,256), Blocks.MAGMA_BLOCK.defaultBlockState());
+            world.setBlockAndUpdate(new BlockPos(256,groundY-1,256), Blocks.MAGMA_BLOCK.defaultBlockState());
             queue(server,bed,player,second);
             pending.set(null,constructor.newInstance(player.getUUID(), searches.get(player.getUUID()),
                     256,256,System.nanoTime(),CompletableFuture.completedFuture(null),false));
@@ -164,7 +195,7 @@ final class SearchRegressionChecks {
                     "repeated entry/tick work shares the same per-tick budget");
             release.invoke(null,world); searches.clear();
 
-            world.setBlockAndUpdate(new BlockPos(256,199,256), Blocks.STONE.defaultBlockState());
+            world.setBlockAndUpdate(new BlockPos(256,groundY-1,256), Blocks.STONE.defaultBlockState());
             queue(server,bed,player);
             pending.set(null,constructor.newInstance(player.getUUID(), searches.get(player.getUUID()),
                     256,256,System.nanoTime()-timeout.getLong(null)-1,CompletableFuture.completedFuture(null),false));
