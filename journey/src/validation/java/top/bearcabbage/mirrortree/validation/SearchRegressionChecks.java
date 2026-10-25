@@ -59,7 +59,7 @@ final class SearchRegressionChecks {
             }
             check.accept(inside, "small offset border candidates are valid before chunk loading");
             border.setCenter(5000, 5000);
-            MTDream.enter(player, bed); tick.invoke(null, server);
+            MTDream.select(player, bed, null); tick.invoke(null, server);
             check.accept(searches.isEmpty() && pending.get(null)==null,
                     "disjoint border ends search without scheduling a chunk");
             border.setCenter(2999, 2999); border.setSize(2);
@@ -173,7 +173,7 @@ final class SearchRegressionChecks {
                     "completed safe load succeeds even when the wait deadline has passed");
             player.teleportTo(bedroom,originalPosition.x,originalPosition.y,originalPosition.z,Set.of(),0,0,false);
             player.setGameMode(GameType.ADVENTURE);
-            resetBudget(); MTDream.enter(player,bed);
+            resetBudget(); MTDream.select(player,bed,null);
             check.accept(player.level()==world && searches.isEmpty() && pending.get(null)==null && !hasTicket.getAsBoolean(),
                     "loaded safe candidate completes at entry and releases its ticket");
             player.teleportTo(bedroom,originalPosition.x,originalPosition.y,originalPosition.z,Set.of(),0,0,false);
@@ -182,7 +182,7 @@ final class SearchRegressionChecks {
             border.setCenter(2500.5,0.5); border.setSize(1);
             ChunkPos cold=new ChunkPos(2500>>4,0);
             check.accept(world.getChunkSource().getChunkNow(cold.x(),cold.z())==null, "cold fixture starts unloaded");
-            resetBudget(); MTDream.enter(player,bed);
+            resetBudget(); MTDream.select(player,bed,null);
             Object deferred=pending.get(null);
             var ready=deferred.getClass().getDeclaredMethod("ready"); ready.setAccessible(true);
             var fast=deferred.getClass().getDeclaredMethod("fast"); fast.setAccessible(true);
@@ -206,7 +206,7 @@ final class SearchRegressionChecks {
         var workTick=MTDream.class.getDeclaredField("workTick"); workTick.setAccessible(true);
         var work=MTDream.class.getDeclaredField("workThisTick"); work.setAccessible(true);
         workTick.setInt(null,server.getTickCount()); work.setLong(null,2_000_000);
-        for (var player:players) MTDream.enter(player,bed);
+        for (var player:players) MTDream.select(player,bed,null);
     }
 
     private static void resetBudget() throws Exception {

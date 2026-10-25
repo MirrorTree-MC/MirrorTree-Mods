@@ -34,6 +34,9 @@ import net.minecraft.world.level.storage.LevelData;
 import top.bearcabbage.lanterninstorm.LanternInStormAPI;
 import top.bearcabbage.mirrortree.MirrorTree;
 import top.bearcabbage.mirrortree.mixin.ChunkMapAccessor;
+import top.bearcabbage.mirrortree.settlement.DreamSelectionMenu;
+import top.bearcabbage.mirrortree.settlement.SettlementCommands;
+import top.bearcabbage.mirrortree.settlement.SettlementWarps;
 
 public final class MTDream {
     private static final LinkedHashMap<UUID, Search> SEARCHES = new LinkedHashMap<>();
@@ -42,7 +45,9 @@ public final class MTDream {
             new TicketType(40, TicketType.FLAG_LOADING | TicketType.FLAG_KEEP_DIMENSION_ACTIVE));
     private static final int RANGE = 3000, MAX_ATTEMPTS = 32, MAX_POSITION_DRAWS = 128, MAX_CANDIDATES_PER_TICK = 4;
     private static final long CHUNK_WAIT_NANOS = 30_000_000_000L;
-    private record Search(BlockPos bed, int attempts) {}
+    private record Search(BlockPos bed, int attempts, SettlementWarps.Settlement settlement) {
+        Search(BlockPos bed, int attempts) { this(bed, attempts, null); }
+    }
     private record PendingSearch(UUID player, Search search, int x, int z, long startedNanos, CompletableFuture<?> ready, boolean fast) {
         ChunkPos chunk() { return new ChunkPos(x >> 4, z >> 4); }
     }
@@ -52,6 +57,7 @@ public final class MTDream {
     private static BlockPos wakePosition;
 
     public static void init() {
+        SettlementCommands.init();
         wakePosition = new BlockPos(MirrorTree.config.getInt("bedroomX", 4239),
                 MirrorTree.config.getInt("bedroomY", 66), MirrorTree.config.getInt("bedroomZ", 799));
         CommandRegistrationCallback.EVENT.register((dispatcher, access, environment) -> {
@@ -84,10 +90,7 @@ public final class MTDream {
     }
 
     public static void enter(ServerPlayer player, BlockPos bed) {
-        if (!player.level().dimension().equals(MirrorTree.bedroom) || player.isSpectator()
-                || !player.isAlive() || !(player.level().getBlockState(bed).getBlock() instanceof BedBlock)
-                || player.distanceToSqr(bed.getX() + .5, bed.getY() + .5, bed.getZ() + .5) > 36
-                || SEARCHES.containsKey(player.getUUID())) return;
+        if (!canChoose(player, bed)) return;
         try {
             var snapshot = DreamStore.load(player);
             if (snapshot.inBedroom) {
@@ -108,13 +111,48 @@ public final class MTDream {
                     player.sendSystemMessage(Component.literal("你回到了梦中。"));
                 }
             } else {
-                SEARCHES.put(player.getUUID(), new Search(bed.immutable(), 0));
-                player.sendSystemMessage(Component.literal("你躺在床上，闭上了眼睛……正在寻找安全的入梦点。"));
-                drainSearch(player.level().getServer(), false);
+                DreamSelectionMenu.open(player, bed);
             }
         } catch (Exception e) {
             MirrorTree.LOGGER.error("Cannot enter dream for {}", player.getUUID(), e);
             player.sendSystemMessage(Component.literal("入梦数据读取失败，原记录已保留，请联系管理员。"));
+        }
+    }
+
+    public static boolean canChoose(ServerPlayer player, BlockPos bed) {
+        return validBed(player, bed) && !SEARCHES.containsKey(player.getUUID());
+    }
+
+    /** Revalidate the server-owned selection rather than trusting a menu item or old warp snapshot. */
+    public static boolean select(ServerPlayer player, BlockPos bed, String settlementName) {
+        if (!canChoose(player, bed)) return false;
+        try {
+            if (DreamStore.load(player).inBedroom) return false;
+            var settlement = settlementName == null ? null : SettlementWarps.resolve(player, settlementName);
+            if (settlementName != null && settlement == null) {
+                player.sendSystemMessage(Component.literal("这个聚落已删除或不可访问，请重新选择。"));
+                return false;
+            }
+            if (settlement != null && !player.level().getServer().overworld().getWorldBorder().isWithinBounds(settlement.blockPos())) {
+                player.sendSystemMessage(Component.literal("聚落位置超出世界边界，请联系管理员。"));
+                return false;
+            }
+            var overworld = player.level().getServer().overworld();
+            if (settlement != null && (settlement.blockPos().getY() <= overworld.getMinY()
+                    || settlement.blockPos().getY() + 1 >= overworld.getMaxY())) {
+                player.sendSystemMessage(Component.literal("聚落位置超出世界高度范围，请联系管理员。"));
+                return false;
+            }
+            SEARCHES.put(player.getUUID(), new Search(bed.immutable(), 0, settlement));
+            player.sendSystemMessage(Component.literal(settlement == null
+                    ? "你躺在床上，闭上了眼睛……正在寻找安全的入梦点。"
+                    : "正在前往聚落「" + settlement.displayName() + "」……"));
+            drainSearch(player.level().getServer(), false);
+            return true;
+        } catch (Exception e) {
+            MirrorTree.LOGGER.error("Cannot select dream for {}", player.getUUID(), e);
+            player.sendSystemMessage(Component.literal("入梦数据读取失败，原记录已保留，请联系管理员。"));
+            return false;
         }
     }
 
@@ -181,7 +219,8 @@ public final class MTDream {
             }
             if (SEARCHES.isEmpty()) return false;
             var first = SEARCHES.firstEntry();
-            BlockPos position = randomCandidate(world);
+            var settlement = first.getValue().settlement();
+            BlockPos position = settlement == null ? randomCandidate(world) : settlement.blockPos();
             if (position == null) {
                 SEARCHES.remove(first.getKey());
                 server.getPlayerList().getPlayer(first.getKey()).sendSystemMessage(
@@ -205,6 +244,14 @@ public final class MTDream {
             // A newly queued record may equal the cancelled one by value; preserve its identity.
             if (SEARCHES.get(pending.player()) == search) SEARCHES.remove(pending.player());
             releaseSearch(world);
+            return pending.fast();
+        }
+        if (search.settlement() != null
+                && (!search.settlement().equals(SettlementWarps.resolve(player, search.settlement().name()))
+                    || !world.getWorldBorder().isWithinBounds(search.settlement().blockPos()))) {
+            SEARCHES.remove(pending.player());
+            releaseSearch(world);
+            player.sendSystemMessage(Component.literal("聚落位置或访问权限已变化，请重新选择。"));
             return pending.fast();
         }
         if (pending.ready() == null) {
@@ -249,15 +296,28 @@ public final class MTDream {
             int x = pending.x(), z = pending.z();
             if (world.getChunkSource().getChunkNow(x >> 4, z >> 4) == null)
                 throw new IllegalStateException("Dream candidate chunk did not finish loading");
-            BlockPos candidate = new BlockPos(x, world.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
+            var settlement = search.settlement();
+            BlockPos candidate = settlement == null
+                    ? new BlockPos(x, world.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z)
+                    : nearbySafe(world, settlement.blockPos(), true);
             SEARCHES.remove(pending.player());
-            if (safe(world, candidate)) {
-                if (player.teleportTo(world, x + .5, candidate.getY(), z + .5, Set.of(), 0, 0, false)) {
+            if (candidate != null && safe(world, candidate)) {
+                float yaw = settlement == null ? 0 : settlement.yaw(), pitch = settlement == null ? 0 : settlement.pitch();
+                if (player.teleportTo(world, candidate.getX() + .5, candidate.getY(), candidate.getZ() + .5,
+                        Set.of(), yaw, pitch, false)) {
                     if (!player.isCreative()) player.setGameMode(GameType.SURVIVAL);
                     player.setRespawnPosition(new ServerPlayer.RespawnConfig(
-                            LevelData.RespawnData.of(Level.OVERWORLD, candidate, 0, 0), true), false);
-                    LanternInStormAPI.setRTPSpawn(player, candidate, false);
+                            LevelData.RespawnData.of(Level.OVERWORLD, candidate, yaw, pitch), true), false);
+                    LanternInStormAPI.setRTPSpawn(player, candidate, settlement != null);
+                    if (settlement != null) {
+                        player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket(
+                                Component.literal("大鹏的梦").withColor(0x525288)));
+                        player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket(
+                                Component.literal("聚落「" + settlement.displayName() + "」是你的起点")));
+                    }
                 }
+            } else if (settlement != null) {
+                player.sendSystemMessage(Component.literal("聚落附近暂时没有安全落点，请联系管理员，或选择随机入梦。"));
             } else if (search.attempts() + 1 >= MAX_ATTEMPTS) {
                 player.sendSystemMessage(Component.literal("这次没有找到安全入梦点，请再试一次。"));
             } else SEARCHES.put(pending.player(), new Search(search.bed(), search.attempts() + 1));
@@ -292,10 +352,14 @@ public final class MTDream {
     }
 
     private static boolean validSearch(ServerPlayer player, Search search) {
+        return validBed(player, search.bed());
+    }
+
+    private static boolean validBed(ServerPlayer player, BlockPos bed) {
         return player != null && player.isAlive() && !player.isSpectator()
                 && player.level().dimension().equals(MirrorTree.bedroom)
-                && player.level().getBlockState(search.bed()).getBlock() instanceof BedBlock
-                && player.distanceToSqr(search.bed().getX() + .5, search.bed().getY() + .5, search.bed().getZ() + .5) <= 36;
+                && player.level().getBlockState(bed).getBlock() instanceof BedBlock
+                && player.distanceToSqr(bed.getX() + .5, bed.getY() + .5, bed.getZ() + .5) <= 36;
     }
 
     private static void releaseSearch(ServerLevel world) {
@@ -328,6 +392,10 @@ public final class MTDream {
     }
 
     private static BlockPos nearbySafe(ServerLevel world, BlockPos center) {
+        return nearbySafe(world, center, false);
+    }
+
+    private static BlockPos nearbySafe(ServerLevel world, BlockPos center, boolean loadedOnly) {
         for (int radius = 0; radius <= 4; radius++) {
             for (int y = 0; y <= 3; y++) {
                 for (int x = -radius; x <= radius; x++) {
@@ -335,10 +403,12 @@ public final class MTDream {
                         // Inner positions were already checked at an earlier radius.
                         if (radius > 0 && Math.abs(x) < radius && Math.abs(z) < radius) continue;
                         BlockPos pos = center.offset(x, y, z);
-                        if (safe(world, pos)) return pos;
+                        if ((!loadedOnly || world.getChunkSource().getChunkNow(pos.getX() >> 4, pos.getZ() >> 4) != null)
+                                && safe(world, pos)) return pos;
                         if (y > 0) {
                             pos = center.offset(x, -y, z);
-                            if (safe(world, pos)) return pos;
+                            if ((!loadedOnly || world.getChunkSource().getChunkNow(pos.getX() >> 4, pos.getZ() >> 4) != null)
+                                    && safe(world, pos)) return pos;
                         }
                     }
                 }

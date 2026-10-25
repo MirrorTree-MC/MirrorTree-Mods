@@ -21,6 +21,9 @@
   "mixins": [
     "mirrortree.mixins.json"
   ],
+  "suggests": {
+    "essential_commands": ">=0.39.0-mc26.1.1"
+  },
   "depends": {
     "fabricloader": ">=0.19.5",
     "minecraft": "~26.1.2",

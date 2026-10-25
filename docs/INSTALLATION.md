@@ -33,6 +33,8 @@ python update_mods.py --side client --mods "<实例的mods目录>"
 
 LIStorm 已合入 AnnoyingEffects、Spirit in Storm 和 MirrorSkills；升级时备份并移走这三个独立旧模组，避免重复注册。不要删除 Pufferfish Skills / Attributes 或其玩家进度。
 
+Journey 6.2.0 起，首次右键卧室床可选择随机入梦或加入聚落。服务端安装 Essential Commands 0.39.0-mc26.1.1 或兼容新版后，管理员可在主世界用 `/mtwarp 名称` 创建聚落，用 `/mtwarp-delete 名称` 删除；聚落菜单只列出玩家可访问、名称以 `聚落：` 开头的主世界 warp。未安装 Essential Commands 时仍可随机入梦。详细规则见 [Journey 聚落管理](../journey/README.md#聚落管理)。
+
 ## 自托管客户端更新
 
 ModpackUpdater 每次启动后台检查，仅有待更新内容时，主菜单才自动显示确认页；无更新时直接保留主菜单，自动重启成功只显示短暂完成通知。确认「更新并重启」后下载、验签和校验，独立进程等待游戏退出再备份、替换，成功后自动启动游戏；也可稍后更新。旧文件留存在实例 `mod-update-backups`，用户额外内容保留。客户端需配置自有服务器 URL 与固定签名公钥；公开发行包不包含生产配置或密钥。独立服务、问答发布向导、端口转发和恢复命令见 [ModpackUpdater 使用说明](../modpackupdater/README.md)。

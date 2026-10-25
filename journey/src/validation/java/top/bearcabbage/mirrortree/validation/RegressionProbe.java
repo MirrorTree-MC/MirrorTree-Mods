@@ -171,9 +171,14 @@ public final class RegressionProbe implements ModInitializer {
         bedroom.setBlockAndUpdate(bed,Blocks.RED_BED.defaultBlockState());
         bedroom.setBlockAndUpdate(bed.north(),Blocks.RED_BED.defaultBlockState()
                 .setValue(BedBlock.PART,net.minecraft.world.level.block.state.properties.BedPart.HEAD));
+        SettlementRegressionChecks.run(server, player, bed, this::check);
         SearchRegressionChecks.run(server, player, bed, this::check);
         var firstResult=UseBlockCallback.EVENT.invoker().interact(player,bedroom,InteractionHand.MAIN_HAND,bedHit);
         check(firstResult.consumesAction(), "first-dream bed callback consumed interaction");
+        check(player.containerMenu instanceof top.bearcabbage.mirrortree.settlement.DreamSelectionMenu,
+                "first-dream bed opens a choice of random dream or settlement");
+        player.containerMenu.clicked(top.bearcabbage.mirrortree.settlement.DreamSelectionMenu.RANDOM_SLOT,
+                0, net.minecraft.world.inventory.ContainerInput.PICKUP, player);
         var field=MTDream.class.getDeclaredField("SEARCHES");field.setAccessible(true);
         check(((Map<?,?>)field.get(null)).containsKey(player.getUUID()) || player.level()==overworld,
                 "first-dream search queued or completed immediately");
