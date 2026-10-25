@@ -122,6 +122,9 @@ public final class RestartLauncher {
             expectedRestartId = values.getProperty("restartId");
             if (expectedRestartId == null || !expectedRestartId.matches("[a-f0-9-]{36}")) throw new IOException("游戏重启标识损坏");
             if (!Files.isRegularFile(Path.of(command.getFirst())) || !Files.isDirectory(cwd)) throw new IOException("游戏启动环境已变化");
+            // Preserve embedded quotes and trailing backslashes in Windows Java arguments.
+            if (System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win"))
+                System.setProperty("jdk.lang.Process.allowAmbiguousCommands", "false");
             Process process = new ProcessBuilder(command).directory(cwd.toFile()).redirectErrorStream(true)
                     .redirectOutput(root.resolve(UpdateApplier.STATE + "/restarted-game.log").toFile()).start();
             System.out.println("Updated game started; process " + process.pid());

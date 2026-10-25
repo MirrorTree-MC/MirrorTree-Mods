@@ -55,6 +55,11 @@ public final class UpdateApplier {
     public static void move(Path from, Path to) throws IOException {
         try { Files.move(from, to, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING); }
         catch (AtomicMoveNotSupportedException e) { Files.move(from, to, StandardCopyOption.REPLACE_EXISTING); }
+        catch (AccessDeniedException e) {
+            // Windows atomic move may refuse an existing recovery target.
+            if (!System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win") || !Files.isRegularFile(to)) throw e;
+            Files.move(from, to, StandardCopyOption.REPLACE_EXISTING);
+        }
     }
 
     public static void writeProperties(Path path, Properties values) throws IOException {

@@ -65,6 +65,7 @@ public final class RegressionProbe implements ModInitializer {
         var bedroom = server.getLevel(MirrorTree.bedroom);
         ServerLevel stars = server.getLevel(ResourceKey.create(Registries.DIMENSION, Identifier.parse("starry_skies:overworld")));
         check(bedroom != null && stars != null, "production bedroom and Starry Skies dimensions loaded");
+        checkBedroomTravel(server, bedroom, stars);
         player.teleportTo(bedroom, 100.5, 200, 100.5, Set.of(), 0, 0, false);
         player.setGameMode(GameType.SURVIVAL);
         var state = PlayerStore.get(player);
@@ -182,6 +183,44 @@ public final class RegressionProbe implements ModInitializer {
         var field=MTDream.class.getDeclaredField("SEARCHES");field.setAccessible(true);
         check(((Map<?,?>)field.get(null)).containsKey(player.getUUID()) || player.level()==overworld,
                 "first-dream search queued or completed immediately");
+    }
+    private void checkBedroomTravel(MinecraftServer server, ServerLevel bedroom, ServerLevel stars) throws Exception {
+        for (var outside : List.of(server.overworld(), server.getLevel(Level.NETHER), stars)) {
+            player.teleportTo(outside,100.5,200,100.5,Set.of(),0,0,false);
+            player.setGameMode(GameType.SURVIVAL);
+            check(player.teleportTo(bedroom,100.5,200,100.5,Set.of(),0,0,false)
+                    && player.gameMode()==GameType.ADVENTURE,
+                    "generic teleport from " + outside.dimension().identifier() + " enters bedroom adventure immediately");
+            check(player.teleportTo(bedroom,102.5,200,100.5,Set.of(),0,0,false)
+                    && player.gameMode()==GameType.ADVENTURE,
+                    "same-bedroom shop teleport keeps adventure");
+            check(player.teleportTo(outside,100.5,200,100.5,Set.of(),0,0,false)
+                    && player.gameMode()==GameType.SURVIVAL,
+                    "generic teleport out to " + outside.dimension().identifier() + " restores survival immediately");
+        }
+        for (var mode : List.of(GameType.CREATIVE, GameType.SPECTATOR)) {
+            player.setGameMode(mode);
+            check(player.teleportTo(bedroom,100.5,200,100.5,Set.of(),0,0,false) && player.gameMode()==mode,
+                    mode + " is preserved when entering bedroom");
+            check(player.teleportTo(server.overworld(),100.5,200,100.5,Set.of(),0,0,false) && player.gameMode()==mode,
+                    mode + " is preserved when leaving bedroom");
+        }
+        player.setGameMode(GameType.SURVIVAL);
+        var commands=server.getCommands().getDispatcher();
+        var permission=net.minecraft.server.permissions.LevelBasedPermissionSet.GAMEMASTER;
+        commands.execute("execute in mirrortree:bedroom run tp @s 100.5 200 100.5",
+                player.createCommandSourceStack().withPermission(permission));
+        check(player.level()==bedroom && player.gameMode()==GameType.ADVENTURE,
+                "vanilla cross-dimension teleport command enters adventure");
+        commands.execute("execute in minecraft:overworld run tp @s 100.5 200 100.5",
+                player.createCommandSourceStack().withPermission(permission));
+        check(player.level()==server.overworld() && player.gameMode()==GameType.SURVIVAL,
+                "vanilla cross-dimension teleport command restores survival");
+        player.setGameMode(GameType.ADVENTURE);
+        check(player.teleportTo(stars,100.5,200,100.5,Set.of(),0,0,false)
+                && player.gameMode()==GameType.ADVENTURE,
+                "unrelated adventure travel outside bedroom is preserved");
+        player.setGameMode(GameType.SURVIVAL);
     }
     private void checkBedroomInteractionAllowlist() {
         for (String id : List.of(

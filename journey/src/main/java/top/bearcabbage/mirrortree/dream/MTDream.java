@@ -6,6 +6,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
+import net.fabricmc.fabric.api.entity.event.v1.ServerEntityLevelChangeEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -78,6 +79,12 @@ public final class MTDream {
                         .withColor(0xDDD605).withStyle(style ->
                                 style.withClickEvent(new ClickEvent.RunCommand("/wakeup"))));
         });
+        ServerEntityLevelChangeEvents.AFTER_PLAYER_CHANGE_LEVEL.register((player, origin, destination) -> {
+            if (destination.dimension().equals(MirrorTree.bedroom) && player.gameMode() == GameType.SURVIVAL)
+                player.setGameMode(GameType.ADVENTURE);
+            else if (origin.dimension().equals(MirrorTree.bedroom) && player.gameMode() == GameType.ADVENTURE)
+                player.setGameMode(GameType.SURVIVAL);
+        });
         ServerTickEvents.END_SERVER_TICK.register(MTDream::tick);
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> SEARCHES.remove(handler.player.getUUID()));
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
@@ -104,7 +111,7 @@ public final class MTDream {
                 }
                 if (player.teleportTo(destination, safe.getX() + .5, safe.getY(), safe.getZ() + .5,
                         Set.of(), snapshot.yaw, snapshot.pitch, false)) {
-                    if (!player.isCreative()) player.setGameMode(GameType.SURVIVAL);
+                    if (player.gameMode() == GameType.ADVENTURE) player.setGameMode(GameType.SURVIVAL);
                     snapshot.restore(player);
                     snapshot.inBedroom = false;
                     DreamStore.save(player, snapshot);
@@ -175,7 +182,7 @@ public final class MTDream {
                 return false;
             }
             player.removeAllEffects();
-            if (!player.isCreative()) player.setGameMode(GameType.ADVENTURE);
+            if (player.gameMode() == GameType.SURVIVAL) player.setGameMode(GameType.ADVENTURE);
             player.sendSystemMessage(Component.literal("你醒来了。右键卧室的床可以返回梦境。"));
             return true;
         } catch (Exception e) {
@@ -305,7 +312,7 @@ public final class MTDream {
                 float yaw = settlement == null ? 0 : settlement.yaw(), pitch = settlement == null ? 0 : settlement.pitch();
                 if (player.teleportTo(world, candidate.getX() + .5, candidate.getY(), candidate.getZ() + .5,
                         Set.of(), yaw, pitch, false)) {
-                    if (!player.isCreative()) player.setGameMode(GameType.SURVIVAL);
+                    if (player.gameMode() == GameType.ADVENTURE) player.setGameMode(GameType.SURVIVAL);
                     player.setRespawnPosition(new ServerPlayer.RespawnConfig(
                             LevelData.RespawnData.of(Level.OVERWORLD, candidate, yaw, pitch), true), false);
                     LanternInStormAPI.setRTPSpawn(player, candidate, settlement != null);
@@ -381,7 +388,7 @@ public final class MTDream {
             if (!player.teleportTo(world, safe.getX() + .5, safe.getY(), safe.getZ() + .5, Set.of(), 90, 0, false))
                 return false;
             player.removeAllEffects();
-            if (!player.isCreative()) player.setGameMode(GameType.ADVENTURE);
+            if (player.gameMode() == GameType.SURVIVAL) player.setGameMode(GameType.ADVENTURE);
             player.setRespawnPosition(new ServerPlayer.RespawnConfig(
                     LevelData.RespawnData.of(MirrorTree.bedroom, safe, 90, 0), true), false);
             return true;
