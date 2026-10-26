@@ -50,26 +50,31 @@ public class WaterFillingStatusEffect extends TickingAnnoyingStatusEffect {
     var eye = entity.getEyePosition();
     BlockState flowing = blockFluid.defaultBlockState().setValue(LiquidBlock.LEVEL, 8);
     int range = (int) Math.floor(REACH + 0.5);
-    for (int dx = -range; dx <= range; ++dx)
-      for (int dy = -range; dy <= range; ++dy)
+    BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+    for (int dx = -range; dx <= range; ++dx) {
+      double eyeX = pos.getX() + dx + 0.5 - eye.x;
+      for (int dy = -range; dy <= range; ++dy) {
+        double eyeY = pos.getY() + dy + 0.5 - eye.y;
+        double distanceXY = eyeX * eyeX + eyeY * eyeY;
+        if (distanceXY > REACH * REACH) continue;
         for (int deltaZ = -range; deltaZ <= range; ++deltaZ) {
-          double eyeX = pos.getX() + dx + 0.5 - eye.x;
-          double eyeY = pos.getY() + dy + 0.5 - eye.y;
           double eyeZ = pos.getZ() + deltaZ + 0.5 - eye.z;
-          double distanceSquared = eyeX * eyeX + eyeY * eyeY + eyeZ * eyeZ;
+          double distanceSquared = distanceXY + eyeZ * eyeZ;
           if (distanceSquared > REACH * REACH) continue;
-          BlockPos p = pos.offset(dx, dy, deltaZ);
+          BlockPos p = cursor.set(pos.getX() + dx, pos.getY() + dy, pos.getZ() + deltaZ);
 
           BlockState blockState = world.getBlockState(p);
           Block block = blockState.getBlock();
 
           if (block instanceof FarmlandBlock || block instanceof DirtPathBlock) {
+            p = p.immutable();
             FarmlandBlock.turnToDirt(null, blockState, world, p);
             blockState = world.getBlockState(p);
             block = blockState.getBlock();
           }
 
           if (block instanceof LeavesBlock) {
+            p = p.immutable();
             world.destroyBlock(p, true);
             blockState = world.getBlockState(p);
             block = blockState.getBlock();
@@ -80,6 +85,7 @@ public class WaterFillingStatusEffect extends TickingAnnoyingStatusEffect {
               && !(block instanceof SoulSandBlock)) {
             float hardness = blockState.getDestroySpeed(world, p);
             if (hardness >= 0 && hardness <= BREAKING_FORCE * (REACH - Math.sqrt(distanceSquared))) {
+              p = p.immutable();
               world.destroyBlock(p, true);
             }
             blockState = world.getBlockState(p);
@@ -87,9 +93,12 @@ public class WaterFillingStatusEffect extends TickingAnnoyingStatusEffect {
           }
 
           if (block instanceof AirBlock) {
-            world.setBlockAndUpdate(p, flowing);
+            // Block updates can retain the position; only read-only probes share the cursor.
+            world.setBlockAndUpdate(p.immutable(), flowing);
           }
         }
+      }
+    }
 
     return true;
   }

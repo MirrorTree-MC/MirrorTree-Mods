@@ -1,6 +1,12 @@
 package top.bearcabbage.lanterninstorm.test;
 
 import io.netty.channel.embedded.EmbeddedChannel;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.server.players.NameAndId;
 import java.util.List;
 import java.util.Set;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentTarget;
@@ -8,12 +14,6 @@ import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.network.Connection;
-import net.minecraft.network.protocol.PacketFlow;
-import net.minecraft.server.network.CommonListenerCookie;
-import net.minecraft.util.ProblemReporter;
-import net.minecraft.world.level.storage.TagValueInput;
-import net.minecraft.server.players.NameAndId;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -23,6 +23,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.phys.Vec3;
 import top.bearcabbage.annoyingeffects.effect.TanglingNightmareStatusEffect;
 import top.bearcabbage.lanterninstorm.content.StormContent;
@@ -206,6 +207,43 @@ public class ReviewRegressionGameTest {
             && PlayerStore.get(player).tick == 0
             && TanglingNightmareStatusEffect.AnnoyingBar.get(player) == 0,
         "bedroom protection consumes no durability and resets buildup before the 20-tick check");
+  }
+
+  @GameTest(maxTicks = 40)
+  public void waterFillingPreservesBlockRules(GameTestHelper helper) {
+    var level = helper.getLevel();
+    var player = StormServerGameTest.player(level, "water-blocks");
+    var origin = helper.absolutePos(new BlockPos(4, 4, 4));
+    try {
+      player.teleportTo(origin.getX() + .5, origin.getY(), origin.getZ() + .5);
+      var center = origin.above();
+      level.setBlockAndUpdate(center, Blocks.AIR.defaultBlockState());
+      level.setBlockAndUpdate(center.east(), Blocks.OAK_LEAVES.defaultBlockState());
+      level.setBlockAndUpdate(center.west(), Blocks.DIRT_PATH.defaultBlockState());
+      level.setBlockAndUpdate(center.north(), Blocks.SOUL_SAND.defaultBlockState());
+      level.setBlockAndUpdate(center.south(), Blocks.STONE.defaultBlockState());
+      var outside = origin.offset(3, 3, 3);
+      level.setBlockAndUpdate(outside, Blocks.OAK_LEAVES.defaultBlockState());
+      AnnoyingEffects.WATER_FILLING.value().applyEffectTick(level, player, 0);
+      helper.assertTrue(level.getBlockState(center).is(Blocks.WATER)
+              && level.getBlockState(center).getValue(LiquidBlock.LEVEL) == 8,
+          "air becomes the original flowing-water state");
+      helper.assertTrue(level.getBlockState(center.east()).is(Blocks.WATER),
+          "leaf destruction is followed by water placement at the same position");
+      helper.assertTrue(level.getBlockState(center.west()).is(Blocks.DIRT), "paths become dirt");
+      helper.assertTrue(level.getBlockState(center.north()).is(Blocks.SOUL_SAND)
+              && level.getBlockState(center.south()).is(Blocks.STONE),
+          "soul sand and full solid blocks remain intact");
+      helper.assertTrue(level.getBlockState(outside).is(Blocks.OAK_LEAVES),
+          "the cubic loop still excludes positions outside the eye-centered sphere");
+      AnnoyingEffects.WATER_FILLING.value().applyEffectTick(level, player, 0);
+      helper.assertTrue(level.getBlockState(center).is(Blocks.WATER)
+              && level.getBlockState(center.north()).is(Blocks.SOUL_SAND),
+          "repeated scans do not disturb existing fluid or excluded blocks");
+      helper.succeed();
+    } finally {
+      level.getServer().getPlayerList().remove(player);
+    }
   }
 
   @GameTest(maxTicks = 40)

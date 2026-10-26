@@ -22,8 +22,11 @@ import top.bearcabbage.lanterninstorm.safety.*;
 /** Runs in Fabric's headless game-test server, with two independent network player records. */
 public class StormServerGameTest {
   static ServerPlayer player(ServerLevel level, String name) {
-    var cookie =
-        CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(), name), false);
+    return player(level, new GameProfile(UUID.randomUUID(), name));
+  }
+
+  static ServerPlayer player(ServerLevel level, GameProfile profile) {
+    var cookie = CommonListenerCookie.createInitial(profile, false);
     var player =
         new ServerPlayer(
             level.getServer(), level, cookie.gameProfile(), cookie.clientInformation());

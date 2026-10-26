@@ -59,6 +59,7 @@ public final class RegressionProbe implements ModInitializer {
         check(bedroom != null && stars != null, "production bedroom and Starry Skies dimensions loaded");
         checkBedroomTravel(server, bedroom, stars);
         top.bearcabbage.mirrortree.dream.DreamTravelRegressionChecks.run(server, this::check);
+        top.bearcabbage.mirrortree.dream.AsyncTravelRegressionChecks.run(server, this::check);
         player.teleportTo(bedroom, 100.5, 200, 100.5, Set.of(), 0, 0, false);
         player.setGameMode(GameType.SURVIVAL);
         var state = PlayerStore.get(player);
@@ -137,6 +138,7 @@ public final class RegressionProbe implements ModInitializer {
         player.setAbsorptionAmount(1);
         platform(bedroom,new BlockPos(4239,66,799));
         player.startSleeping(dreamBed);
+        top.bearcabbage.mirrortree.dream.AsyncTravelRegressionChecks.resetBudget();
         check(MTDream.wakeup(player) && player.level()==bedroom && player.gameMode()==GameType.ADVENTURE,
                 "sleeping overworld player wakes in bedroom adventure mode");
         check(!player.hasEffect(MobEffects.SPEED),"dream effects suspended in bedroom");
@@ -144,6 +146,7 @@ public final class RegressionProbe implements ModInitializer {
         var bed=new BlockPos(4241,66,799);
         bedroom.setBlockAndUpdate(bed,Blocks.RED_BED.defaultBlockState());
         var bedHit=new BlockHitResult(Vec3.atCenterOf(bed),Direction.UP,bed,false);
+        top.bearcabbage.mirrortree.dream.AsyncTravelRegressionChecks.resetBudget();
         var result=UseBlockCallback.EVENT.invoker().interact(player,bedroom,InteractionHand.MAIN_HAND,bedHit);
         check(result.consumesAction() && player.level()==overworld && player.gameMode()==GameType.SURVIVAL,
                 "bed callback restores prior dream and survival mode");

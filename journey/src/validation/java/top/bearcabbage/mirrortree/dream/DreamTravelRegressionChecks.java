@@ -82,9 +82,14 @@ public final class DreamTravelRegressionChecks {
         player.getFoodData().setFoodLevel(7);
         player.addEffect(new MobEffectInstance(MobEffects.SPEED,600));
         player.startSleeping(source);
+        AsyncTravelRegressionChecks.resetBudget();
         check(MTDream.wakeup(player) && player.level()==bedroom && DreamStore.load(player).inBedroom,
             "fixture wakeup failed");
         check(!player.hasEffect(MobEffects.SPEED), "fixture effect was not suspended");
+    }
+    private void enter() throws Exception {
+        AsyncTravelRegressionChecks.resetBudget();
+        MTDream.enter(player, bedroomBed);
     }
     private void staleSnapshot() throws Exception {
         wake();
@@ -96,7 +101,7 @@ public final class DreamTravelRegressionChecks {
         player.getFoodData().setFoodLevel(3);
         player.addEffect(new MobEffectInstance(MobEffects.SLOWNESS,100));
         move(bedroom,4239.5,66,799.5);
-        MTDream.enter(player, bedroomBed);
+        enter();
         check(player.getHealth()==6 && player.getFoodData().getFoodLevel()==3
                 && player.hasEffect(MobEffects.SLOWNESS) && !DreamStore.load(player).inBedroom,
                 "later bedroom visit cannot replay old vitals or effects");
@@ -106,7 +111,7 @@ public final class DreamTravelRegressionChecks {
         var snapshot = DreamStore.load(player);
         snapshot.effects.get(0).getAsJsonObject().addProperty("id", "audit:removed_effect");
         DreamStore.save(player, snapshot);
-        MTDream.enter(player, bedroomBed);
+        enter();
         check(player.level()==bedroom && player.gameMode()==GameType.ADVENTURE
                 && DreamStore.load(player).inBedroom && !player.hasEffect(MobEffects.SPEED),
                 "invalid effect cancels bed return before changing dimension or state");
@@ -122,7 +127,7 @@ public final class DreamTravelRegressionChecks {
         byte[] original = Files.readAllBytes(snapshotPath());
         Files.createDirectory(temporary());
         try {
-            MTDream.enter(player, bedroomBed);
+            enter();
             check(player.level()==bedroom && player.gameMode()==GameType.ADVENTURE
                     && !player.hasEffect(MobEffects.SPEED)
                     && Arrays.equals(original, Files.readAllBytes(snapshotPath())),
@@ -130,14 +135,14 @@ public final class DreamTravelRegressionChecks {
             check(!player.teleportTo(server.overworld(),40.5,200,40.5,Set.of(),0,0,false),
                     "save failure also cancels generic exit");
         } finally { Files.delete(temporary()); }
-        MTDream.enter(player, bedroomBed);
+        enter();
         check(player.level()==server.overworld() && player.hasEffect(MobEffects.SPEED)
                 && !DreamStore.load(player).inBedroom, "return succeeds after write failure is removed");
         player.setHealth(6);
         player.getFoodData().setFoodLevel(3);
         player.removeAllEffects();
         move(bedroom,4239.5,66,799.5);
-        MTDream.enter(player, bedroomBed);
+        enter();
         check(player.getHealth()==6 && player.getFoodData().getFoodLevel()==3
                 && !player.hasEffect(MobEffects.SPEED), "successful retry cannot be consumed twice");
     }
@@ -182,7 +187,7 @@ public final class DreamTravelRegressionChecks {
             Files.deleteIfExists(temporary());
         }
         move(bedroom,4239.5,66,799.5);
-        MTDream.enter(player, bedroomBed);
+        enter();
         check(player.getHealth()==6 && !player.hasEffect(MobEffects.SPEED)
                 && !DreamStore.load(player).inBedroom, "pending commit recovers before re-entry without replay");
     }
@@ -200,7 +205,7 @@ public final class DreamTravelRegressionChecks {
         } finally { Files.deleteIfExists(temporary()); }
         check(DreamStore.load(player).inBedroom && !player.hasEffect(MobEffects.SPEED),
                 "rejected teleport with failed rollback recovers the active snapshot");
-        MTDream.enter(player, bedroomBed);
+        enter();
         check(player.level()==server.overworld() && player.hasEffect(MobEffects.SPEED)
                 && !DreamStore.load(player).inBedroom, "recovered snapshot remains usable exactly once");
     }
@@ -247,7 +252,7 @@ public final class DreamTravelRegressionChecks {
         player.getFoodData().setFoodLevel(3);
         player.addEffect(new MobEffectInstance(MobEffects.SLOWNESS,100));
         move(bedroom,4239.5,66,799.5);
-        MTDream.enter(player, bedroomBed);
+        enter();
         check(player.getHealth()==6 && player.getFoodData().getFoodLevel()==3
                 && player.hasEffect(MobEffects.SLOWNESS) && !player.hasEffect(MobEffects.SPEED),
                 "later bed use cannot replay pre-death state");

@@ -34,6 +34,7 @@ public final class ModpackUpdaterClient implements ClientModInitializer {
     static ModpackUpdaterConfig config;
     private static boolean helperStarted;
     private static volatile boolean pendingUpdate;
+    private static volatile CompletableFuture<Void> discardTask;
 
     @Override public void onInitializeClient() {
         try {
@@ -45,6 +46,7 @@ public final class ModpackUpdaterClient implements ClientModInitializer {
             if (refreshPending()) status = Files.exists(ROOT.resolve(UpdateApplier.STATE + "/transaction.properties"))
                     ? "上次更新中断，退出游戏后将先恢复备份" : "更新已暂存，退出游戏后即可应用";
         } catch (Exception e) { fail(e); }
+        finally { refreshPending(); }
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
             WORKER.execute(() -> {
                 try {
@@ -59,6 +61,9 @@ public final class ModpackUpdaterClient implements ClientModInitializer {
             });
         });
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
+            // A requested cancellation must finish before shutdown decides to launch the helper.
+            var cancellation = discardTask;
+            if (cancellation != null) cancellation.join();
             refreshPending();
             if (pending() && !helperStarted) {
                 try { launchHelper(restartPrepared); } catch (Exception e) { fail(e); }
@@ -154,7 +159,7 @@ public final class ModpackUpdaterClient implements ClientModInitializer {
     static void discard() {
         if (busy) return;
         busy = true;
-        WORKER.execute(() -> {
+        discardTask = CompletableFuture.runAsync(() -> {
             try {
                 UpdateApplier.discard(ROOT);
                 RestartLauncher.discard(ROOT);
@@ -162,7 +167,7 @@ public final class ModpackUpdaterClient implements ClientModInitializer {
                 plan = null; status = "已取消暂存更新，可重新检查";
             } catch (Exception e) { fail(e); }
             finally { refreshPending(); busy = false; }
-        });
+        }, WORKER);
     }
     static void applyAndRestart() {
         if (!pending() || busy || Minecraft.getInstance().level != null) return;

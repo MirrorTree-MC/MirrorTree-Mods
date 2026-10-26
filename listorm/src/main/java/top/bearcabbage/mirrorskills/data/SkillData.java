@@ -31,6 +31,10 @@ public class SkillData {
     // For Potion Level: "level_adjustment" -> x
     private Map<String, Float> parameters = Map.of();
     private boolean sharedSkills = true, sharedCooldowns = true, sharedParameters = true;
+    // Hot timers stay in each snapshot; ticking them must not copy the stable parameter map.
+    // Presence is separate from value so absent and explicitly zero legacy keys stay distinct.
+    private float periodicTimer, invincibleTicks;
+    private boolean hasPeriodicTimer, hasInvincibleTicks;
     
     private String lastDeathDimension = null; // Stores identifier string e.g. "minecraft:overworld"
     private Vec3 lastDeathLocation = null;
@@ -60,10 +64,22 @@ public class SkillData {
     }
 
     public float getParameter(String key) {
+        if (key.equals("periodic_timer")) return periodicTimer;
+        if (key.equals("invincible_ticks")) return invincibleTicks;
         return parameters.getOrDefault(key, 0.0f);
     }
 
     public void setParameter(String key, float value) {
+        if (key.equals("periodic_timer")) {
+            periodicTimer = value;
+            hasPeriodicTimer = true;
+            return;
+        }
+        if (key.equals("invincible_ticks")) {
+            invincibleTicks = value;
+            hasInvincibleTicks = true;
+            return;
+        }
         if (sharedParameters) {
             parameters = new HashMap<>(parameters);
             sharedParameters = false;
@@ -112,6 +128,8 @@ public class SkillData {
         // Parameters
         CompoundTag paramsTag = new CompoundTag();
         parameters.forEach((k, v) -> paramsTag.putFloat(k, v));
+        if (hasPeriodicTimer) paramsTag.putFloat("periodic_timer", periodicTimer);
+        if (hasInvincibleTicks) paramsTag.putFloat("invincible_ticks", invincibleTicks);
         nbt.put("Parameters", paramsTag);
 
         // Death Location
@@ -173,6 +191,10 @@ public class SkillData {
         newData.enabledSkills = this.enabledSkills;
         newData.cooldowns = this.cooldowns;
         newData.parameters = this.parameters;
+        newData.periodicTimer = periodicTimer;
+        newData.invincibleTicks = invincibleTicks;
+        newData.hasPeriodicTimer = hasPeriodicTimer;
+        newData.hasInvincibleTicks = hasInvincibleTicks;
         sharedSkills = sharedCooldowns = sharedParameters = true;
         newData.lastDeathLocation = this.lastDeathLocation;
         newData.lastDeathDimension = this.lastDeathDimension;
@@ -200,6 +222,10 @@ public class SkillData {
             data.enabledSkills = buffer.readMap(SkillData::readNetworkString, FriendlyByteBuf::readBoolean);
             data.cooldowns = buffer.readMap(SkillData::readNetworkString, FriendlyByteBuf::readVarLong);
             data.parameters = buffer.readMap(SkillData::readNetworkString, FriendlyByteBuf::readFloat);
+            Float periodic = data.parameters.remove("periodic_timer");
+            Float invincible = data.parameters.remove("invincible_ticks");
+            if (periodic != null) data.setParameter("periodic_timer", periodic);
+            if (invincible != null) data.setParameter("invincible_ticks", invincible);
             data.sharedSkills = data.sharedCooldowns = data.sharedParameters = false;
             if (buffer.readBoolean()) {
                 data.lastDeathLocation = new Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble());
@@ -212,7 +238,21 @@ public class SkillData {
         public void encode(FriendlyByteBuf buffer, SkillData data) {
             buffer.writeMap(data.enabledSkills, SkillData::writeNetworkString, FriendlyByteBuf::writeBoolean);
             buffer.writeMap(data.cooldowns, SkillData::writeNetworkString, FriendlyByteBuf::writeVarLong);
-            buffer.writeMap(data.parameters, SkillData::writeNetworkString, FriendlyByteBuf::writeFloat);
+            // Keep the existing map wire format and full per-tick snapshot contract.
+            buffer.writeVarInt(data.parameters.size() + (data.hasPeriodicTimer ? 1 : 0)
+                    + (data.hasInvincibleTicks ? 1 : 0));
+            data.parameters.forEach((key, value) -> {
+                writeNetworkString(buffer, key);
+                buffer.writeFloat(value);
+            });
+            if (data.hasPeriodicTimer) {
+                writeNetworkString(buffer, "periodic_timer");
+                buffer.writeFloat(data.periodicTimer);
+            }
+            if (data.hasInvincibleTicks) {
+                writeNetworkString(buffer, "invincible_ticks");
+                buffer.writeFloat(data.invincibleTicks);
+            }
             buffer.writeBoolean(data.lastDeathLocation != null);
             if (data.lastDeathLocation != null) {
                 buffer.writeDouble(data.lastDeathLocation.x);

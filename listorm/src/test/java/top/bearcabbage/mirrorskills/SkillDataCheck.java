@@ -1,6 +1,7 @@
 package top.bearcabbage.mirrorskills;
 
 import io.netty.buffer.Unpooled;
+import java.util.Map;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.FriendlyByteBuf;
@@ -28,7 +29,54 @@ public final class SkillDataCheck {
     }
   }
 
+  private static void checkTimerCompatibility() {
+    var original = new SkillData();
+    original.setParameter("custom:stable", 7);
+    var absent = original.copy();
+    original.setParameter("periodic_timer", 11999);
+    original.setParameter("invincible_ticks", 2);
+    var previous = original.copy();
+    original.setParameter("periodic_timer", 0);
+    original.setParameter("invincible_ticks", 1);
+    previous.setParameter("custom:stable", 9);
+    check(previous.getParameter("periodic_timer") == 11999
+            && previous.getParameter("invincible_ticks") == 2
+            && original.getParameter("custom:stable") == 7,
+        "timer ticks and stable parameter changes isolate both snapshot directions");
+    var absentTag = absent.toNbt(new CompoundTag()).getCompoundOrEmpty("Parameters");
+    check(!absentTag.contains("periodic_timer") && !absentTag.contains("invincible_ticks"),
+        "timer presence stays absent in earlier snapshots");
+    check(original.toNbt(new CompoundTag()).getCompoundOrEmpty("Parameters").contains("periodic_timer"),
+        "an explicitly zero timer stays present in persistent data");
+    checkNetworkRoundTrip(original);
+    checkNetworkRoundTrip(previous);
+
+    for (float value : new float[] {0, -0.0f, 12000, Float.NaN, Float.POSITIVE_INFINITY}) {
+      var parameters = Map.of("periodic_timer", value, "invincible_ticks", value, "custom:stable", 7f);
+      var buffer = new FriendlyByteBuf(Unpooled.buffer());
+      try {
+        // The alpha.6 codec sends three ordinary maps followed by an optional death location.
+        buffer.writeVarInt(0);
+        buffer.writeVarInt(0);
+        buffer.writeMap(parameters, (b, key) -> b.writeUtf(key), FriendlyByteBuf::writeFloat);
+        buffer.writeBoolean(false);
+        var decoded = SkillData.STREAM_CODEC.decode(buffer);
+        check(buffer.readableBytes() == 0, "updated codec consumes the legacy timer snapshot");
+        buffer.clear();
+        SkillData.STREAM_CODEC.encode(buffer, decoded);
+        check(buffer.readVarInt() == 0 && buffer.readVarInt() == 0
+                && buffer.readMap(b -> b.readUtf(65535), FriendlyByteBuf::readFloat).equals(parameters)
+                && !buffer.readBoolean() && buffer.readableBytes() == 0,
+            "legacy map decoder still reads all timer values from updated snapshots");
+        checkNetworkRoundTrip(SkillData.fromNbt(decoded.toNbt(new CompoundTag())));
+      } finally {
+        buffer.release();
+      }
+    }
+  }
+
   public static void main(String[] args) {
+    checkTimerCompatibility();
     SkillData data = new SkillData();
     data.setSkillEnabled("invisibility", true);
     data.setParameter("beneficial_increase", 0.6f);
