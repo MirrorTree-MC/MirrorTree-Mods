@@ -46,7 +46,9 @@ public class MirrorTree implements ModInitializer {
     return InteractionResult.SUCCESS;
    }
    if(!player.isCreative() && !BedroomInteractions.allowsBlock(block)
-     && !BedroomInteractions.isSurvivalShopItem(player.getItemInHand(hand))
+     // Only secondary use skips the protected block's interaction before placing the shop.
+     && !(player.isSecondaryUseActive() && !player.isSpectator()
+       && BedroomInteractions.isSurvivalShopItem(player.getItemInHand(hand)))
      && !(block instanceof net.minecraft.world.level.block.DoorBlock
      || block instanceof net.minecraft.world.level.block.GrassBlock
      || block instanceof net.minecraft.world.level.block.LecternBlock

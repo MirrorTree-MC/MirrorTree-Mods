@@ -68,6 +68,25 @@ public final class NoticeGameTest implements FabricClientGameTest {
                 check(sign.getFrontText().getMessage(0,false).getString().equals("[测试] 作者")
                         && cache.get("newsItems", NewsItem[].class).length == 1,
                         "JDBC result publishes and caches the same notices");
+                var nullItem=new NewsItem();nullItem.type="空正文";nullItem.name="作者";
+                var unicodeItem=new NewsItem();unicodeItem.type="字符";unicodeItem.name="作者";
+                unicodeItem.content="123456789😀abcdefghijABCDEFGHI😀尾";
+                NewsService.readAndPublishNews(newsConnection(List.of(nullItem,item,unicodeItem), new int[2]), cache, 5);
+                var emptyContent=sign.getFrontText();
+                check(emptyContent.getMessage(0,false).getString().equals("[空正文] 作者")
+                        && emptyContent.getMessage(1,false).getString().isEmpty()
+                        && emptyContent.getMessage(2,false).getString().isEmpty()
+                        && emptyContent.getMessage(3,false).getString().isEmpty(),
+                        "SQL NULL content publishes as an empty body");
+                var second=SyncSignNotice.noticeFor(marker.setMessage(1,Component.literal("2")));
+                check(second.getMessage(1,false).getString().equals(item.content)
+                        && cache.get("newsItems",NewsItem[].class).length==3,
+                        "NULL content does not prevent other rows from publishing and caching");
+                var unicode=SyncSignNotice.noticeFor(marker.setMessage(1,Component.literal("3")));
+                check(unicode.getMessage(1,false).getString().equals("123456789😀")
+                        && unicode.getMessage(2,false).getString().equals("abcdefghij")
+                        && unicode.getMessage(3,false).getString().equals("ABCDEFGHI😀"),
+                        "notice lines retain complete code points at ten and thirty character boundaries");
                 NewsService.readAndPublishNews(newsConnection(List.of(), new int[2]), cache, 5);
                 check(sign.getFrontText()==marker,"empty JDBC result clears published notices");
                 var savedCache = new SConfig(Path.of("notice-regression-cache.json").toAbsolutePath());

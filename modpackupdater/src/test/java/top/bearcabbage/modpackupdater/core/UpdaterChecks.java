@@ -40,6 +40,45 @@ public final class UpdaterChecks {
         p.setProperty("new.0", newHash); p.setProperty("size.0", Long.toString(size)); p.setProperty("stage.0", stage);
         return p;
     }
+
+    private static void stagingCleanupChecks(Path work) throws Exception {
+        Path root = Files.createDirectory(work.resolve("cleanup"));
+        byte[] content = "new configuration".getBytes();
+        Path stage = root.resolve(".modpackupdater/staging/one/file");
+        Files.createDirectories(stage.getParent());
+        Files.write(stage, content);
+        Path unrelated = stage.resolveSibling("personal-file");
+        Files.writeString(unrelated, "retain");
+        Properties values = plan("config/example.txt", "-", sha(content), content.length,
+                ".modpackupdater/staging/one/file");
+        Path pending = root.resolve(".modpackupdater/pending.properties");
+        Path journal = root.resolve(".modpackupdater/transaction.properties");
+        UpdateApplier.writeProperties(pending, values);
+        UpdateApplier.apply(root);
+        check(!Files.exists(stage) && Files.exists(unrelated), "committed update cleans only its verified staging files");
+        var applied = UpdateApplier.readProperties(root.resolve(".modpackupdater/applied.properties"));
+        check(Files.exists(root.resolve(applied.getProperty("backup")).resolve("transaction.properties")),
+                "staging cleanup preserves the permanent rollback record");
+        check(UpdateApplier.hash(root.resolve("config/example.txt")).equals(sha(content)), "cleanup retains committed content");
+
+        Path cancelled = root.resolve(".modpackupdater/staging/two/file");
+        Files.createDirectories(cancelled.getParent()); Files.write(cancelled, content);
+        values.setProperty("stage.0", ".modpackupdater/staging/two/file");
+        UpdateApplier.writeProperties(pending, values);
+        UpdateApplier.writeProperties(journal, values);
+        rejects(() -> UpdateApplier.discard(root), "interrupted transaction cannot be discarded");
+        check(Files.exists(cancelled) && Files.exists(pending), "recovery inputs survive a rejected discard");
+        Files.delete(journal);
+        UpdateApplier.discard(root);
+        check(!Files.exists(pending) && !Files.exists(cancelled.getParent()), "discard reclaims its file and empty staging directory");
+        check(Files.exists(unrelated), "discard retains unrelated staged content");
+
+        Files.createDirectories(cancelled.getParent()); Files.writeString(cancelled, "changed after staging");
+        UpdateApplier.writeProperties(pending, values);
+        UpdateApplier.discard(root);
+        check(Files.exists(cancelled) && !Files.exists(pending), "changed staging is preserved without undoing cancellation");
+        check(UpdateApplier.hash(root.resolve("config/example.txt")).equals(sha(content)), "cleanup failure cannot roll back committed files");
+    }
     private static void configChecks(Path work, String url, String key, Map<String, byte[]> responses) throws Exception {
         Path root = Files.createDirectory(work.resolve("rewritten-configs"));
         var client = new UpdateClient(root, url, key);
@@ -164,9 +203,11 @@ public final class UpdaterChecks {
             String url = "http://127.0.0.1:"+server.getAddress().getPort()+"/";
             var client = new UpdateClient(root, url, key);
             configChecks(work, url, key, responses);
+            stagingCleanupChecks(work);
             var update = client.check();
             check(update.changeCount() == 2 && update.downloads().size() == 1, "replace by mod ID despite renamed JAR");
             client.stage(update, ignored -> {});
+            var stagedPlan = UpdateApplier.readProperties(root.resolve(".modpackupdater/pending.properties"));
             check(Files.exists(root.resolve("mods/old.jar")) && !Files.exists(root.resolve("mods/new.jar")), "downloads do not change loaded mods");
             // Use only the JDK and the four helper class files in a fresh JVM.
             Path helper = root.resolve("helper.jar");
@@ -205,6 +246,8 @@ public final class UpdaterChecks {
             check(Files.exists(root.resolve("mods/old.jar")) && !Files.exists(root.resolve("mods/new.jar")),
                     "helper waits for the game process to exit before changing files");
             check(applied.waitFor() == 0, "standalone helper works without Fabric, Minecraft or Gson");
+            for (var change : UpdateApplier.changes(root, stagedPlan)) if (!change.newHash().equals("-"))
+                check(!Files.exists(root.resolve(change.stage())), "standalone helper reclaims successful download staging");
             long restartDeadline = System.nanoTime() + java.time.Duration.ofSeconds(10).toNanos();
             while (!Files.exists(root.resolve("restart-test.marker")) && System.nanoTime() < restartDeadline) Thread.sleep(20);
             check(Files.exists(root.resolve("restart-test.marker")), "automatic restart observes verified updated files and preserves argument boundaries");
@@ -280,6 +323,44 @@ public final class UpdaterChecks {
             UpdateApplier.recover(root);
             check(UpdateApplier.hash(root.resolve("mods/new.jar")).equals(sha(old)), "interrupted transaction rolls back from journal");
             check(!Files.exists(root.resolve(".modpackupdater/transaction.properties")), "recovery clears transaction marker");
+            // Crash after pending deletion but before journal deletion must resume the verified plan.
+            Path commit = Files.createDirectory(work.resolve("interrupted-commit"));
+            String commitBackup = "mod-update-backups/updater-interrupted-commit";
+            String commitStage = ".modpackupdater/staging/commit/new.jar";
+            Files.createDirectories(commit.resolve("mods"));
+            Files.createDirectories(commit.resolve(commitBackup + "/mods"));
+            Files.createDirectories(commit.resolve(commitStage).getParent());
+            Files.write(commit.resolve("mods/new.jar"), current);
+            Files.write(commit.resolve(commitBackup + "/mods/new.jar"), old);
+            Files.write(commit.resolve(commitStage), current);
+            var committing = plan("mods/new.jar", sha(old), sha(current), current.length, commitStage);
+            committing.setProperty("backup", commitBackup);
+            UpdateApplier.writeProperties(commit.resolve(".modpackupdater/applied.properties"), committing);
+            UpdateApplier.writeProperties(commit.resolve(".modpackupdater/transaction.properties"), committing);
+            RestartLauncher.prepareCommand(commit, List.of(javaExecutable, "-cp", System.getProperty("java.class.path"),
+                    UpdaterChecks.class.getName(), "restart-probe", commit.toString(), sha(current), RESTART_ARGUMENT),
+                    Path.of(System.getProperty("user.dir")));
+            var resumed = new ProcessBuilder(javaExecutable, "-Djava.awt.headless=true", "-jar", helper.toString(),
+                    commit.toString(), "0", "restart").redirectErrorStream(true)
+                    .redirectOutput(commit.resolve("recovery.log").toFile()).start();
+            check(resumed.waitFor() == 0 && Files.exists(commit.resolve("restart-test.marker")),
+                    "interrupted commit restores pending plan and reapplies before restarting");
+            check(UpdateApplier.hash(commit.resolve("mods/new.jar")).equals(sha(current))
+                            && Files.exists(commit.resolve(".modpackupdater/applied.properties"))
+                            && !Files.exists(commit.resolve(".modpackupdater/transaction.properties"))
+                            && !Files.exists(commit.resolve(".modpackupdater/pending.properties"))
+                            && !Files.exists(commit.resolve(commitStage)),
+                    "resumed commit records successful files and only then removes staging");
+            Files.delete(commit.resolve("restart-test.marker"));
+            RestartLauncher.prepareCommand(commit, List.of(javaExecutable, "-cp", System.getProperty("java.class.path"),
+                    UpdaterChecks.class.getName(), "restart-probe", commit.toString(), sha(current), RESTART_ARGUMENT),
+                    Path.of(System.getProperty("user.dir")));
+            var noUpdate = new ProcessBuilder(javaExecutable, "-Djava.awt.headless=true", "-jar", helper.toString(),
+                    commit.toString(), "0", "restart").redirectErrorStream(true)
+                    .redirectOutput(commit.resolve("no-update.log").toFile()).start();
+            check(noUpdate.waitFor() == 0 && !Files.exists(commit.resolve("restart-test.marker"))
+                            && !Files.exists(commit.resolve(".modpackupdater/restart.properties")),
+                    "no pending update never restarts or reuses an earlier success record");
         } finally { server.stop(0); }
         // Failed checks leave their isolated run for diagnosis; successful runs leave no fixtures.
         try (var files = Files.walk(work)) {

@@ -1,7 +1,5 @@
 package top.bearcabbage.mirrortree.dream;
 
-import com.mojang.authlib.GameProfile;
-import io.netty.channel.embedded.EmbeddedChannel;
 import java.nio.file.*;
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -9,14 +7,11 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerEntityLevelChangeEvents;
 import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.Connection;
-import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerLoadedPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.GameType;
@@ -59,11 +54,7 @@ public final class DreamTravelRegressionChecks {
     private interface Case { void run() throws Exception; }
     private void runCase(Case action) throws Exception {
         try {
-            var cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(), "travel-audit"), false);
-            player = new ServerPlayer(server, server.overworld(), cookie.gameProfile(), cookie.clientInformation());
-            var connection = new Connection(PacketFlow.SERVERBOUND);
-            new EmbeddedChannel(connection);
-            server.getPlayerList().placeNewPlayer(connection, player, cookie);
+            player = top.bearcabbage.mirrortree.validation.ProbePlayers.join(server, "travel-audit");
             platform(server.overworld(), source);
             platform(server.overworld(), new BlockPos(40,200,40));
             platform(bedroom, new BlockPos(4239,66,799));

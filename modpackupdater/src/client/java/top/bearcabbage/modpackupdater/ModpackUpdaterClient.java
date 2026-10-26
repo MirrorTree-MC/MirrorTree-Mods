@@ -33,6 +33,7 @@ public final class ModpackUpdaterClient implements ClientModInitializer {
     static UpdateClient updater;
     static ModpackUpdaterConfig config;
     private static boolean helperStarted;
+    private static volatile boolean pendingUpdate;
 
     @Override public void onInitializeClient() {
         try {
@@ -41,7 +42,7 @@ public final class ModpackUpdaterClient implements ClientModInitializer {
                     || config.trustedPublicKey == null || config.trustedPublicKey.isBlank()) {
                 status = "请在 config/modpackupdater.json 设置更新服务器和签名公钥";
             } else updater = new UpdateClient(ROOT, config.serverUrl, config.trustedPublicKey);
-            if (pending()) status = Files.exists(ROOT.resolve(UpdateApplier.STATE + "/transaction.properties"))
+            if (refreshPending()) status = Files.exists(ROOT.resolve(UpdateApplier.STATE + "/transaction.properties"))
                     ? "上次更新中断，退出游戏后将先恢复备份" : "更新已暂存，退出游戏后即可应用";
         } catch (Exception e) { fail(e); }
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
@@ -58,6 +59,7 @@ public final class ModpackUpdaterClient implements ClientModInitializer {
             });
         });
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
+            refreshPending();
             if (pending() && !helperStarted) {
                 try { launchHelper(restartPrepared); } catch (Exception e) { fail(e); }
             }
@@ -92,8 +94,12 @@ public final class ModpackUpdaterClient implements ClientModInitializer {
         return "整合包更新";
     }
     static boolean pending() {
-        return Files.exists(ROOT.resolve(UpdateApplier.STATE + "/pending.properties"))
+        return pendingUpdate;
+    }
+    private static boolean refreshPending() {
+        pendingUpdate = Files.exists(ROOT.resolve(UpdateApplier.STATE + "/pending.properties"))
                 || Files.exists(ROOT.resolve(UpdateApplier.STATE + "/transaction.properties"));
+        return pendingUpdate;
     }
     static void fail(Exception e) {
         status = "更新未完成：" + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
@@ -105,7 +111,7 @@ public final class ModpackUpdaterClient implements ClientModInitializer {
         busy = true; status = "正在后台检查更新…";
         WORKER.execute(() -> {
             try {
-                if (pending()) {
+                if (refreshPending()) {
                     updater.fetch();
                     status = "服务器检查完成；已有暂存更新，可应用并自动重启，或取消暂存后重新检查。";
                 } else {
@@ -118,7 +124,7 @@ public final class ModpackUpdaterClient implements ClientModInitializer {
                 plan = null; fail(e);
                 if (restartNotice != null) status = restartNotice + " 暂时无法检查后续版本，可稍后重试。";
             }
-            finally { busy = false; }
+            finally { refreshPending(); busy = false; }
         });
     }
     static synchronized void download() {
@@ -131,6 +137,7 @@ public final class ModpackUpdaterClient implements ClientModInitializer {
                 RestartLauncher.prepare(ROOT, FabricLoader.getInstance().getLaunchArguments(false));
                 restartPrepared = true;
                 updater.stage(selected, text -> status = text);
+                refreshPending();
                 for (int seconds = 3; seconds > 0; seconds--) {
                     status = "校验完成，" + seconds + " 秒后关闭游戏。更新窗口将显示备份和应用进度，完成后自动重启。";
                     Thread.sleep(1000);
@@ -140,20 +147,22 @@ public final class ModpackUpdaterClient implements ClientModInitializer {
             } catch (Exception e) {
                 restartAfterDownload = false; restartPrepared = false;
                 try { RestartLauncher.discard(ROOT); } catch (IOException cleanup) { e.addSuppressed(cleanup); }
-                fail(e); busy = false;
+                fail(e); refreshPending(); busy = false;
             }
         });
     }
     static void discard() {
         if (busy) return;
-        try {
-            if (Files.exists(ROOT.resolve(UpdateApplier.STATE + "/transaction.properties")))
-                throw new IOException("上次更新中断，请先退出并恢复更新");
-            Files.deleteIfExists(ROOT.resolve(UpdateApplier.STATE + "/pending.properties"));
-            RestartLauncher.discard(ROOT);
-            restartPrepared = false; restartAfterDownload = false;
-            plan = null; status = "已取消暂存更新，可重新检查";
-        } catch (Exception e) { fail(e); }
+        busy = true;
+        WORKER.execute(() -> {
+            try {
+                UpdateApplier.discard(ROOT);
+                RestartLauncher.discard(ROOT);
+                restartPrepared = false; restartAfterDownload = false;
+                plan = null; status = "已取消暂存更新，可重新检查";
+            } catch (Exception e) { fail(e); }
+            finally { refreshPending(); busy = false; }
+        });
     }
     static void applyAndRestart() {
         if (!pending() || busy || Minecraft.getInstance().level != null) return;

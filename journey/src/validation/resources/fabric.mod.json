@@ -9,6 +9,7 @@
     ]
   },
   "depends": {
-    "mirrortree": "*"
+    "mirrortree": "*",
+    "numismatic-overhaul": "*"
   }
 }

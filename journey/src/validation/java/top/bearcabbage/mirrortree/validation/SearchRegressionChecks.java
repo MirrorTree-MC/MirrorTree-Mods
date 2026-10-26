@@ -1,17 +1,12 @@
 package top.bearcabbage.mirrortree.validation;
 
-import com.mojang.authlib.GameProfile;
-import io.netty.channel.embedded.EmbeddedChannel;
 import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.Connection;
-import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.*;
-import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.Blocks;
@@ -44,10 +39,7 @@ final class SearchRegressionChecks {
         java.util.function.BooleanSupplier hasTicket = () -> storage.getTickets(chunk.pack()).stream()
                 .anyMatch(t -> { try { return t.getType() == ticket.get(null); }
                     catch (IllegalAccessException e) { throw new RuntimeException(e); } });
-        var cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(), "search-next"), false);
-        var second = new ServerPlayer(server, world, cookie.gameProfile(), cookie.clientInformation());
-        var connection = new Connection(PacketFlow.SERVERBOUND); new EmbeddedChannel(connection);
-        server.getPlayerList().placeNewPlayer(connection, second, cookie);
+        var second = ProbePlayers.join(server, "search-next");
         second.teleportTo(bedroom, originalPosition.x, originalPosition.y, originalPosition.z, Set.of(), 0, 0, false);
         second.setGameMode(GameType.ADVENTURE);
         try {

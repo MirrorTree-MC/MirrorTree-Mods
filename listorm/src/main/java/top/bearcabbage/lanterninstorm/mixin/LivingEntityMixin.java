@@ -12,6 +12,13 @@ import top.bearcabbage.annoyingeffects.StatusEffectInstanceStackHolder;
 
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin implements StatusEffectInstanceStackHolder {
+  @Inject(method = "baseTick", at = @At("HEAD"))
+  private void storm$bedroomSafety(CallbackInfo ci) {
+    // Clear before vanilla creates its effect iterator or applies effect-driven physics.
+    if ((Object) this instanceof net.minecraft.server.level.ServerPlayer player)
+      top.bearcabbage.lanterninstorm.safety.SafetyService.protectBedroom(player);
+  }
+
   @com.llamalad7.mixinextras.injector.ModifyExpressionValue(
       method = "travelInAir",
       at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/Block;getFriction()F"))

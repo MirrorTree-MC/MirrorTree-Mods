@@ -151,7 +151,7 @@ public final class UpdateApplier {
         if (!Files.exists(file) || !readProperties(file).equals(receipts)) writeProperties(file, receipts);
     }
 
-    public static void apply(Path directory) throws IOException {
+    public static boolean apply(Path directory) throws IOException {
         Path root = directory.toRealPath();
         Path state = confined(root, STATE);
         Files.createDirectories(state);
@@ -161,7 +161,7 @@ public final class UpdateApplier {
             Path journal = state.resolve("transaction.properties");
             if (Files.exists(journal)) recover(root);
             Path pending = state.resolve("pending.properties");
-            if (!Files.exists(pending)) return;
+            if (!Files.exists(pending)) return false;
             Properties plan = readProperties(pending);
             UpdateProgress.message("Verifying files / 游戏已关闭，正在核对更新文件…");
             List<Change> changes = changes(root, plan);
@@ -210,6 +210,52 @@ public final class UpdateApplier {
                 try { recover(root); } catch (Exception rollback) { failure.addSuppressed(rollback); }
                 throw new IOException("Update failed; recovery information is in " + journal, failure);
             }
+            // The transaction is committed. Cleanup must never enter the rollback path.
+            cleanupStaged(root, changes);
+            return true;
+        }
+    }
+
+    public static void discard(Path directory) throws IOException {
+        Path root = directory.toRealPath();
+        Path state = confined(root, STATE);
+        Files.createDirectories(state);
+        try (var channel = FileChannel.open(state.resolve("apply.lock"), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+             var lock = channel.tryLock()) {
+            if (lock == null) throw new IOException("Another update helper is running");
+            if (Files.exists(confined(root, STATE + "/transaction.properties")))
+                throw new IOException("An interrupted update must be recovered before discarding it");
+            Path pending = confined(root, STATE + "/pending.properties");
+            if (!Files.exists(pending)) return;
+            List<Change> changes = changes(root, readProperties(pending));
+            Files.delete(pending);
+            cleanupStaged(root, changes);
+        }
+    }
+
+    /** Delete only the verified files named by this finished or explicitly discarded plan. */
+    private static void cleanupStaged(Path root, List<Change> changes) {
+        for (Change change : changes) {
+            if (change.newHash().equals("-")) continue;
+            try {
+                Path staging = confined(root, STATE + "/staging");
+                Path file = confined(root, change.stage());
+                if (!file.startsWith(staging) || file.equals(staging)) throw new IOException("Invalid cleanup path");
+                if (Files.exists(file)) {
+                    if (!Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)
+                            || Files.size(file) != change.size() || !hash(file).equals(change.newHash()))
+                        throw new IOException("Staged file changed; preserving " + file);
+                    Files.delete(file);
+                }
+                // Unknown files and other downloads in the same directory are retained.
+                for (Path parent = file.getParent(); !parent.equals(staging); parent = parent.getParent()) {
+                    confined(root, root.relativize(parent).toString().replace('\\', '/'));
+                    try { Files.deleteIfExists(parent); }
+                    catch (DirectoryNotEmptyException retained) { break; }
+                }
+            } catch (IOException | RuntimeException cleanup) {
+                System.err.println("Update staging cleanup deferred: " + cleanup.getMessage());
+            }
         }
     }
 
@@ -235,6 +281,10 @@ public final class UpdateApplier {
             if (!Files.isRegularFile(file) || !hash(file).equals(c.oldHash()))
                 throw new IOException("Backup damaged; manual recovery required: " + file);
         }
+        // A crash can leave the journal after pending was deleted during commit.
+        // Restore the plan durably before rolling back so apply() can retry it.
+        Path pending = confined(root, STATE + "/pending.properties");
+        if (!Files.exists(pending)) writeProperties(pending, plan);
         for (Change c : changes) {
             Path file = target(root, c.path());
             if (c.oldHash().equals("-")) Files.deleteIfExists(file);
@@ -259,8 +309,13 @@ public final class UpdateApplier {
             if (System.nanoTime() > deadline) throw new IOException("Game is still running; files were not replaced");
             Thread.sleep(500);
         }
-        apply(Path.of(args[0]));
-        applied = true;
+        applied = apply(Path.of(args[0]));
+        if (!applied) {
+            if (args.length == 3) RestartLauncher.discard(Path.of(args[0]));
+            UpdateProgress.message("No pending update / 没有待应用更新，未重新启动游戏。");
+            UpdateProgress.close();
+            return;
+        }
         if (args.length == 3) {
             UpdateProgress.message("Restarting Minecraft / 更新成功，正在重新启动 Minecraft…");
             Process game = RestartLauncher.start(Path.of(args[0]));

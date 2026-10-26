@@ -1,5 +1,6 @@
 package top.bearcabbage.lanterninstorm.test;
 
+import io.netty.channel.embedded.EmbeddedChannel;
 import java.util.List;
 import java.util.Set;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentTarget;
@@ -7,6 +8,25 @@ import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.server.players.NameAndId;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.Vec3;
+import top.bearcabbage.annoyingeffects.effect.TanglingNightmareStatusEffect;
+import top.bearcabbage.lanterninstorm.content.StormContent;
+import top.bearcabbage.mirrorskills.util.StatusEffectInstanceExtensions;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.Level;
@@ -53,6 +73,139 @@ public class ReviewRegressionGameTest {
     } finally {
       helper.getLevel().getServer().getPlayerList().remove(player);
     }
+  }
+
+  @GameTest(maxTicks = 100)
+  public void bedroomProtectsBeforeFirstEffectTick(GameTestHelper helper) {
+    var bedroom = helper.getLevel().getServer().getLevel(
+        ResourceKey.create(Registries.DIMENSION, Identifier.parse("mirrortree:bedroom")));
+    helper.assertTrue(bedroom != null, "bedroom fixture loads");
+    for (GameType mode : GameType.values()) {
+      var player = StormServerGameTest.player(helper.getLevel(), "bedroom-" + mode.getId());
+      try {
+        player.setGameMode(mode);
+        addBedroomEffects(player);
+        var pos = new BlockPos(256 + mode.getId() * 32, 80, 256);
+        helper.assertTrue(player.teleportTo(bedroom, pos.getX() + .5, pos.getY(), pos.getZ() + .5,
+            Set.of(), 0, 0, false), "ordinary cross-dimension teleport succeeds");
+        var state = PlayerStore.get(player);
+        state.tick = 0;
+        state.safe = state.cleared = true;
+        verifyBedroomTick(helper, player, pos);
+        // New effects must also be removed after the initial safe/cleared transition.
+        addBedroomEffects(player);
+        verifyBedroomTick(helper, player, pos);
+      } finally {
+        helper.getLevel().getServer().getPlayerList().remove(player);
+      }
+    }
+    helper.succeed();
+  }
+
+  @GameTest(maxTicks = 100)
+  public void bedroomProtectsPersistedEffectsOnLogin(GameTestHelper helper) {
+    var server = helper.getLevel().getServer();
+    var bedroom = server.getLevel(
+        ResourceKey.create(Registries.DIMENSION, Identifier.parse("mirrortree:bedroom")));
+    var player = StormServerGameTest.player(helper.getLevel(), "bedroom-login");
+    var profile = player.getGameProfile();
+    var pos = new BlockPos(416, 80, 256);
+    try {
+      helper.assertTrue(player.teleportTo(bedroom, pos.getX() + .5, pos.getY(), pos.getZ() + .5,
+          Set.of(), 0, 0, false), "login fixture enters bedroom");
+      addBedroomEffects(player);
+    } finally {
+      server.getPlayerList().remove(player); // Save effects and dimension through the real logout path.
+    }
+    var savedNbt = server.getPlayerList().loadPlayerData(new NameAndId(profile));
+    helper.assertTrue(savedNbt.isPresent(), "logout writes player NBT for the returning profile");
+    // Follow PrepareSpawnTask's NBT loading path, without asynchronous spawn-chunk scheduling.
+    var problems = new ProblemReporter.Collector();
+    var input = TagValueInput.create(problems, server.registryAccess(), savedNbt.orElseThrow());
+    var savedPosition = input.read(ServerPlayer.SavedPosition.MAP_CODEC).orElseThrow();
+    var savedLevel = server.getLevel(savedPosition.dimension().orElseThrow());
+    helper.assertTrue(savedLevel == bedroom, "saved player NBT records the bedroom dimension");
+    var cookie = CommonListenerCookie.createInitial(profile, false);
+    var restored = new ServerPlayer(server, savedLevel, profile, cookie.clientInformation());
+    restored.load(input);
+    var rotation = savedPosition.rotation().orElseThrow();
+    restored.snapTo(savedPosition.position().orElseThrow(), rotation.x, rotation.y);
+    helper.assertTrue(problems.isEmpty(), "saved player NBT loads without codec errors: " + problems.getReport());
+    var connection = new Connection(PacketFlow.SERVERBOUND);
+    new EmbeddedChannel(connection);
+    server.getPlayerList().placeNewPlayer(connection, restored, cookie);
+    try {
+      helper.assertTrue(restored.level() == bedroom && restored.hasEffect(AnnoyingEffects.WATER_FILLING),
+          "login restores the bedroom and existing destructive effect before any tick");
+      helper.assertTrue(PlayerStore.get(restored).tick == 0 && !PlayerStore.get(restored).cleared,
+          "login has not reached the periodic safety check");
+      verifyBedroomTick(helper, restored, pos);
+      helper.succeed();
+    } finally {
+      server.getPlayerList().remove(restored);
+    }
+  }
+
+  @GameTest(maxTicks = 40)
+  public void destructiveEffectsStillTickOutsideBedroom(GameTestHelper helper) {
+    var player = StormServerGameTest.player(helper.getLevel(), "bedroom-outside");
+    try {
+      var pos = helper.absolutePos(new BlockPos(2, 3, 2));
+      player.teleportTo(pos.getX() + .5, pos.getY(), pos.getZ() + .5);
+      player.setNoGravity(true);
+      player.setDeltaMovement(Vec3.ZERO);
+      helper.getLevel().setBlockAndUpdate(pos.above(), Blocks.AIR.defaultBlockState());
+      player.addEffect(new MobEffectInstance(AnnoyingEffects.WATER_FILLING, 200));
+      player.doTick();
+      helper.assertTrue(player.hasEffect(AnnoyingEffects.WATER_FILLING)
+              && helper.getLevel().getBlockState(pos.above()).is(Blocks.WATER),
+          "ordinary dimensions retain destructive effect ticking before periodic safety");
+      helper.succeed();
+    } finally {
+      helper.getLevel().getServer().getPlayerList().remove(player);
+    }
+  }
+
+  private static void addBedroomEffects(ServerPlayer player) {
+    player.addEffect(new MobEffectInstance(AnnoyingEffects.WATER_FILLING, 200));
+    player.addEffect(new MobEffectInstance(AnnoyingEffects.CHAOTIC_TELEPORTATION, 200, 9));
+    player.addEffect(new MobEffectInstance(AnnoyingEffects.TANGLING_NIGHTMARE, 200));
+    var speed = new MobEffectInstance(MobEffects.SPEED, 200);
+    var flags = (StatusEffectInstanceExtensions) speed;
+    flags.mirrorskills$setDurationModified(true);
+    flags.mirrorskills$setLevelModified(true);
+    player.addEffect(speed);
+    var defense = new ItemStack(StormContent.FLASHLIGHT);
+    defense.setDamageValue(40);
+    player.setItemInHand(InteractionHand.MAIN_HAND, defense);
+    TanglingNightmareStatusEffect.AnnoyingBar.set(player, .75);
+  }
+
+  private static void verifyBedroomTick(GameTestHelper helper, ServerPlayer player, BlockPos pos) {
+    ServerLevel level = player.level();
+    level.setBlockAndUpdate(pos.above(), Blocks.AIR.defaultBlockState());
+    level.setBlockAndUpdate(pos.east().above(), Blocks.FARMLAND.defaultBlockState());
+    player.setNoGravity(true);
+    player.setDeltaMovement(Vec3.ZERO);
+    Vec3 before = player.position();
+    var speed = player.getEffect(MobEffects.SPEED);
+    int duration = speed.getDuration();
+    player.doTick();
+    helper.assertTrue(player.position().distanceToSqr(before) < 1.0e-8,
+        "existing chaotic teleportation cannot move a bedroom player");
+    helper.assertTrue(level.getBlockState(pos.above()).isAir()
+            && level.getBlockState(pos.east().above()).is(Blocks.FARMLAND),
+        "existing water filling cannot flood or damage the bedroom");
+    helper.assertTrue(player.getActiveEffects().stream().allMatch(e -> e.getEffect().value().isBeneficial()),
+        "bedroom removes existing debuffs in every game mode before they execute");
+    var flags = (StatusEffectInstanceExtensions) player.getEffect(MobEffects.SPEED);
+    helper.assertTrue(player.getEffect(MobEffects.SPEED) == speed && speed.getDuration() == duration - 1
+            && flags.mirrorskills$isDurationModified() && flags.mirrorskills$isLevelModified(),
+        "beneficial effects tick normally and preserve skill markers");
+    helper.assertTrue(player.getMainHandItem().getDamageValue() == 40
+            && PlayerStore.get(player).tick == 0
+            && TanglingNightmareStatusEffect.AnnoyingBar.get(player) == 0,
+        "bedroom protection consumes no durability and resets buildup before the 20-tick check");
   }
 
   @GameTest(maxTicks = 40)

@@ -1,20 +1,15 @@
 package top.bearcabbage.mirrortree.validation;
 
-import com.mojang.authlib.GameProfile;
-import io.netty.channel.embedded.EmbeddedChannel;
 import java.nio.file.*;
 import java.util.*;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.*;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.core.*;
-import net.minecraft.network.Connection;
-import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.resources.*;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.*;
 import net.minecraft.server.level.*;
-import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.*;
 import net.minecraft.world.effect.*;
 import net.minecraft.world.item.*;
@@ -57,11 +52,8 @@ public final class RegressionProbe implements ModInitializer {
     private void run(MinecraftServer server) throws Exception {
         checkBedroomInteractionAllowlist();
         spawn = server.getWorldData().overworldData().getRespawnData();
-        var cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(), "dream-probe"), false);
-        player = new ServerPlayer(server, server.overworld(), cookie.gameProfile(), cookie.clientInformation());
-        var connection = new Connection(PacketFlow.SERVERBOUND);
-        new EmbeddedChannel(connection);
-        server.getPlayerList().placeNewPlayer(connection, player, cookie);
+        player = ProbePlayers.join(server, "dream-probe");
+        check(!player.hasDisconnected(), "embedded client joined with installed mod payload channels");
         var bedroom = server.getLevel(MirrorTree.bedroom);
         ServerLevel stars = server.getLevel(ResourceKey.create(Registries.DIMENSION, Identifier.parse("starry_skies:overworld")));
         check(bedroom != null && stars != null, "production bedroom and Starry Skies dimensions loaded");
@@ -168,6 +160,7 @@ public final class RegressionProbe implements ModInitializer {
         var blockHit=new BlockHitResult(Vec3.atCenterOf(bed.below()),Direction.UP,bed.below(),false);
         check(UseBlockCallback.EVENT.invoker().interact(player,bedroom,InteractionHand.MAIN_HAND,blockHit)==InteractionResult.FAIL,
                 "ordinary bedroom building permission remains restricted");
+        checkBedroomShopPlacement(bedroom);
         checkBedroomDrops(bedroom);
         // Prior return marked the disk snapshot inactive: this starts a fresh bounded search.
         bedroom.setBlockAndUpdate(bed,Blocks.RED_BED.defaultBlockState());
@@ -240,6 +233,55 @@ public final class RegressionProbe implements ModInitializer {
                 "bedroom right-click allows doll entities");
         check(!BedroomInteractions.allowsEntityId(Identifier.parse("minecraft:armor_stand")),
                 "bedroom still blocks unrelated entities");
+    }
+    private void checkBedroomShopPlacement(ServerLevel bedroom) {
+        var shop = net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(
+                Identifier.parse("numismatic-overhaul:shop"));
+        check(BedroomInteractions.isSurvivalShopItem(new ItemStack(shop)),
+                "shop placement fixture uses the installed Numismatic Overhaul shop");
+        BlockPos target = player.blockPosition().offset(3, 0, -2);
+        var hit = new BlockHitResult(Vec3.atBottomCenterOf(target.above()), Direction.UP, target, false);
+        bedroom.setBlockAndUpdate(target.below(), Blocks.STONE.defaultBlockState());
+        player.closeContainer();
+        player.setGameMode(GameType.ADVENTURE);
+        for (var block : List.of(Blocks.CHEST, Blocks.BARREL)) {
+            bedroom.setBlockAndUpdate(target, block.defaultBlockState());
+            bedroom.setBlockAndUpdate(target.above(), Blocks.AIR.defaultBlockState());
+            var stack = new ItemStack(shop, 2);
+            player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+            player.setShiftKeyDown(false);
+            var result = player.gameMode.useItemOn(player, bedroom, stack, InteractionHand.MAIN_HAND, hit);
+            check(result == InteractionResult.FAIL && player.containerMenu == player.inventoryMenu
+                    && stack.getCount() == 2 && bedroom.getBlockState(target.above()).isAir(),
+                    "holding a shop cannot open protected " + block);
+            player.setShiftKeyDown(true);
+            result = player.gameMode.useItemOn(player, bedroom, stack, InteractionHand.MAIN_HAND, hit);
+            check(result.consumesAction() && player.containerMenu == player.inventoryMenu
+                    && bedroom.getBlockState(target).is(block)
+                    && BedroomInteractions.isSurvivalShop(bedroom.getBlockState(target.above()).getBlock())
+                    && stack.getCount() == 1,
+                    "sneaking places one shop on protected " + block + " without opening it");
+            bedroom.setBlockAndUpdate(target.above(), Blocks.AIR.defaultBlockState());
+        }
+        player.setShiftKeyDown(false);
+        var stack = new ItemStack(shop, 2);
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+        bedroom.setBlockAndUpdate(target, Blocks.OAK_DOOR.defaultBlockState());
+        bedroom.setBlockAndUpdate(target.above(), Blocks.OAK_DOOR.defaultBlockState().setValue(
+                DoorBlock.HALF, net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER));
+        var result = player.gameMode.useItemOn(player, bedroom, stack, InteractionHand.MAIN_HAND, hit);
+        check(result.consumesAction() && bedroom.getBlockState(target).getValue(DoorBlock.OPEN)
+                && stack.getCount() == 2, "holding a shop preserves normal use of allowed bedroom doors");
+        bedroom.setBlockAndUpdate(target.above(), Blocks.AIR.defaultBlockState());
+        bedroom.setBlockAndUpdate(target, Blocks.CHEST.defaultBlockState());
+        player.setGameMode(GameType.CREATIVE);
+        result = player.gameMode.useItemOn(player, bedroom, stack, InteractionHand.MAIN_HAND, hit);
+        check(result.consumesAction() && player.containerMenu != player.inventoryMenu,
+                "creative administrators can still open protected bedroom containers");
+        player.closeContainer();
+        player.setGameMode(GameType.ADVENTURE);
+        player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+        bedroom.setBlockAndUpdate(target, Blocks.AIR.defaultBlockState());
     }
     private void checkBedroomDrops(ServerLevel bedroom) {
         var nearby = AABB.ofSize(player.position(), 32, 32, 32);

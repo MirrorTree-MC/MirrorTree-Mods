@@ -86,11 +86,11 @@ public class NewsService {
      * 创建SignText对象
      */
     private static SignText createSignText(NewsItem item) {
-        String part1 = !item.content.isEmpty() ? item.content.substring(0, Math.min(10, item.content.length())) : "";
-        String part2 = item.content.length() > 10 ? item.content.substring(10, Math.min(20, item.content.length())) : "";
-        String part3 = item.content.length() > 20 ? item.content.substring(20, Math.min(30, item.content.length())) : "";
-
-        String[] lines = {"[" + item.type + "] " + item.name, part1, part2, part3};
+        int[] content = item.content == null ? new int[0] : item.content.codePoints().limit(30).toArray();
+        String[] lines = {"[" + item.type + "] " + item.name, "", "", ""};
+        for (int line = 1, offset = 0; line < lines.length && offset < content.length; line++, offset += 10) {
+            lines[line] = new String(content, offset, Math.min(10, content.length - offset));
+        }
         Component[] messages = new Component[4], filteredMessages = new Component[4];
         for (int line = 0; line < lines.length; line++) {
             messages[line] = Component.literal(lines[line]);

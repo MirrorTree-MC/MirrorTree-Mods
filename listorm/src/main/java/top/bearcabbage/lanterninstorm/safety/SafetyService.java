@@ -17,6 +17,21 @@ public final class SafetyService {
   private static final Identifier BEDROOM =
       Identifier.fromNamespaceAndPath("mirrortree", "bedroom");
 
+  /** Runs before entity/effect ticking, including the first tick after login or dimension travel. */
+  public static void protectBedroom(ServerPlayer player) {
+    if (!player.level().dimension().identifier().equals(BEDROOM)) return;
+    var state = PlayerStore.get(player);
+    boolean hasDebuff = player.getActiveEffects().stream()
+        .anyMatch(effect -> !effect.getEffect().value().isBeneficial());
+    if (state.safe && state.cleared && !hasDebuff
+        && TanglingNightmareStatusEffect.AnnoyingBar.get(player) == 0) return;
+    clear(player, ItemStack.EMPTY, false);
+    state.safe = true;
+    state.cleared = true;
+    StormNetworking.bar(player, false, 0);
+    TanglingNightmareStatusEffect.AnnoyingBar.reset(player);
+  }
+
   public static void tick(ServerPlayer player) {
     var state = PlayerStore.get(player);
     if (state.graceTicks > 0) state.graceTicks--;

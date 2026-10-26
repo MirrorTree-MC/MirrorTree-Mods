@@ -19,13 +19,27 @@ public final class UpdateClient {
     public record Manifest(int schemaVersion, String minecraft, String release, long sequence,
                            List<FileEntry> files, List<String> removeModIds) {}
     public record ModInfo(String id, String version) {}
-    public record Plan(Manifest manifest, List<FileEntry> downloads, Map<String, String> oldFiles) {
-        public int changeCount() {
-            Set<String> paths = new HashSet<>(oldFiles.keySet());
-            for (FileEntry file : downloads) paths.add(file.path());
-            return paths.size();
+    public static final class Plan {
+        private final Manifest manifest;
+        private final List<FileEntry> downloads;
+        private final Map<String, String> oldFiles;
+        private final int changeCount;
+        private final long downloadBytes;
+
+        public Plan(Manifest manifest, List<FileEntry> downloads, Map<String, String> oldFiles) {
+            this.manifest = manifest;
+            this.downloads = List.copyOf(downloads);
+            this.oldFiles = Map.copyOf(oldFiles);
+            Set<String> paths = new HashSet<>(this.oldFiles.keySet());
+            for (FileEntry file : this.downloads) paths.add(file.path());
+            changeCount = paths.size();
+            downloadBytes = this.downloads.stream().mapToLong(FileEntry::size).sum();
         }
-        public long downloadBytes() { return downloads.stream().mapToLong(FileEntry::size).sum(); }
+        public Manifest manifest() { return manifest; }
+        public List<FileEntry> downloads() { return downloads; }
+        public Map<String, String> oldFiles() { return oldFiles; }
+        public int changeCount() { return changeCount; }
+        public long downloadBytes() { return downloadBytes; }
     }
     private static final Gson GSON = new Gson();
     private static final java.util.concurrent.ScheduledExecutorService TIMEOUTS =
