@@ -12,3 +12,5 @@
 | ModpackUpdater | CC0 1.0 | [modpackupdater/LICENSE](modpackupdater/LICENSE) |
 
 Sync Sign Notice 的模组元数据与其原有 MIT LICENSE 保持一致。第三方依赖仍适用各自许可证；例如公告模组内嵌的 MySQL Connector/J 不因此改用 MIT。发行 JAR 保留各模块打包的许可文本。
+
+Minesweeper Bridge 使用 CC0-1.0，见 [模块许可证](minesweeper-bridge/LICENSE)。

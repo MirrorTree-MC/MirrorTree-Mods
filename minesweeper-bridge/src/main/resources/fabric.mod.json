@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "minesweeper-bridge",
+  "version": "${version}",
+  "name": "Minesweeper Bridge",
+  "description": "Server-only silent dialog actions for the MirrorTree Minesweeper datapack.",
+  "authors": [
+    "BaicaiBear"
+  ],
+  "license": "CC0-1.0",
+  "environment": "server",
+  "entrypoints": {
+    "main": [
+      "top.bearcabbage.minesweeper.MinesweeperBridge"
+    ]
+  },
+  "mixins": [
+    "minesweeper-bridge.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "~26.1.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}

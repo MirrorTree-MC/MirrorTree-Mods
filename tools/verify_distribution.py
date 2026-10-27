@@ -17,8 +17,10 @@ MODULES = {
     "journey": "mirrortree",
     "sync-sign-notice": "sync-sign-notice",
     "modpackupdater": "modpackupdater",
+    "minesweeper-bridge": "minesweeper-bridge",
 }
-SIDES = {"client": tuple(MODULES), "server": ("listorm", "journey")}
+SIDES = {"client": ("listorm", "journey", "sync-sign-notice", "modpackupdater"),
+         "server": ("listorm", "journey", "minesweeper-bridge")}
 
 
 def check_jar(data, module, version):

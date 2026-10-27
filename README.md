@@ -1,6 +1,6 @@
 # MirrorTree Mods
 
-MirrorTree 自制模组源码，面向 Minecraft 26.1.2 / Fabric / Java 25。四个模块共享构建，保留各自的 mod ID、版本和存档路径。
+MirrorTree 自制模组源码，面向 Minecraft 26.1.2 / Fabric / Java 25。五个模块共享构建，保留各自的 mod ID、版本和存档路径。
 
 | 模块 | 内容 | 安装端 |
 | --- | --- | --- |
@@ -8,6 +8,8 @@ MirrorTree 自制模组源码，面向 Minecraft 26.1.2 / Fabric / Java 25。四
 | [Journey](journey/README.md) | 卧室、入梦往返、物品与装饰器 | 客户端与服务端 |
 | [Sync Sign Notice](sync-sign-notice/README.md) | MySQL 公告标牌 | 仅客户端 |
 | [ModpackUpdater](modpackupdater/README.md) | 自托管签名更新、后台检查与退出后应用 | 仅客户端 |
+
+| [Minesweeper Bridge](minesweeper-bridge/README.md) | 扫雷对话框静默交互，配套服务端数据包 | 仅服务端 |
 
 使用发行包请阅读[安装与升级](docs/INSTALLATION.md)，包括依赖、更新工具和独立 MirrorSkills／旧技能树的处理。配置、世界、玩家数据和数据库凭据不随包分发。
 

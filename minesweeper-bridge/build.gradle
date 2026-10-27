@@ -1,0 +1,4 @@
+group = 'top.bearcabbage'
+version = '1.0.0+26.1.2'
+base { archivesName = 'minesweeper-bridge' }
+jar { from('LICENSE') }

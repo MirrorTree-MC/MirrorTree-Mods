@@ -7,4 +7,4 @@ pluginManagement {
 }
 
 rootProject.name = 'MirrorTree-Mods'
-include 'listorm', 'journey', 'sync-sign-notice', 'modpackupdater'
+include 'listorm', 'journey', 'sync-sign-notice', 'modpackupdater', 'minesweeper-bridge'
